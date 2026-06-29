@@ -974,7 +974,7 @@ function renderLists(){
   </div>`;
 
   if(LISTS.length===0){
-    html+=`<div class="empty" style="padding:40px 20px"><div class="big">Aún no tienes listas</div><div>Crea una para armar el cancionero de una misa o jornada.</div></div>`;
+    html+=`<div class="empty" style="padding:40px 20px"><div class="big">Aún no tienes listas</div><div>SOLO SE GUARDARÁN SI INICIAS SESIÓN.</div></div>`;
   }
   for(const L of LISTS){
     html+=`<div class="list-card" data-openlist="${L.id}">
@@ -1151,7 +1151,7 @@ function repSaveAsList(){
 }
 
 function createList(){
-  const name=prompt("Nombre de la lista (p. ej. “Misa domingo”, “Jornada TSA”):","");
+  const name=prompt("Nombre de la lista (p. ej. “Misa domingo”, “Adoracion”):","");
   if(name && name.trim()){ LISTS.push({id:uid(),name:name.trim(),songIds:[]}); savePersonalState(); render(); }
 }
 function renameList(lid){
@@ -1633,7 +1633,7 @@ Reglas:
 function openImport(){
   const html=`<div class="modal-head"><h3>Importar cancionero</h3>${closeBtn()}</div>
   <div class="modal-body">
-    <div class="hint" style="margin-bottom:12px"><b>Paso 1.</b> Copia este prompt, pégalo en un modelo de IA (Claude, ChatGPT, etc.) y súbele el cancionero en PDF. Te devolverá un JSON compatible.</div>
+    <div class="hint" style="margin-bottom:12px"><b>Paso 1.</b> Copia este prompt, pégalo en un modelo de IA (Claude RECOMENDADO) y súbele el cancionero en PDF. Te devolverá un JSON compatible.</div>
     <textarea id="aiPrompt" rows="7" readonly style="font-family:var(--mono);font-size:12px;width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:10px;line-height:1.4">${esc(AI_PROMPT)}</textarea>
     <button class="btn sm" id="copyPrompt" style="margin:8px 0 18px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copiar prompt</button>
 
