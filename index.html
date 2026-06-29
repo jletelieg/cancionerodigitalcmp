@@ -974,7 +974,7 @@ function renderLists(){
   </div>`;
 
   if(LISTS.length===0){
-    html+=`<div class="empty" style="padding:40px 20px"><div class="big">Aún no tienes listas</div><div>Crea una para armar el cancionero de una misa o jornada.</div></div>`;
+    html+=`<div class="empty" style="padding:40px 20px"><div class="big">Aún no tienes listas</div><div>Crea una para armar el cancionero de una misa o jornada. NO SE GUARDARÁN SI NO INICIAS SESIÓN ARRIBA EN LA FLECHA</div></div>`;
   }
   for(const L of LISTS){
     html+=`<div class="list-card" data-openlist="${L.id}">
@@ -1151,7 +1151,7 @@ function repSaveAsList(){
 }
 
 function createList(){
-  const name=prompt("Nombre de la lista (p. ej. “Misa domingo”, “Jornada TSA”):","");
+  const name=prompt("Nombre de la lista (p. ej. “Misa domingo”, “Adoracion cantada”):","");
   if(name && name.trim()){ LISTS.push({id:uid(),name:name.trim(),songIds:[]}); savePersonalState(); render(); }
 }
 function renameList(lid){
