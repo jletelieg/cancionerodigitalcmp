@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#11151f">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <title>Cancionero · Misión País</title>
 <style>
 /* ============ THEME ============ */
@@ -541,13 +541,8 @@ function chordsHTML(chords,shift,flat){
 // =================================================================
 function norm(s){return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 // índice de letra para búsqueda
-const SEARCH_INDEX = BASE.map((s,i)=>{
-  let txt="";
-  for(const sec of s.sections||[]) for(const ln of sec) txt+=" "+(ln.lyric||"");
-  return norm(s.title+" "+txt);
-});
+// búsqueda dinámica sobre SONGS (no hay índice estático)
 function songSearchText(id){
-  if(typeof id==="number" && !ov) return SEARCH_INDEX[id];
   const s=effective(id); if(!s) return "";
   let txt=s.title||"";
   for(const sec of s.sections||[]) for(const ln of sec) txt+=" "+(ln.lyric||"");
