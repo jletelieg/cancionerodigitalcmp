@@ -1306,8 +1306,8 @@ function renameList(lid){
 
 // add-to-list modal
 function openAddToList(id){
-  const s=effective(id);
-  let html=`<div class="modal-head"><h3>Agregar a lista</h3>${closeBtn()}</div>
+  if(!isLoggedIn()){openAuthModal();return;}
+  const s=effective(id);  let html=`<div class="modal-head"><h3>Agregar a lista</h3>${closeBtn()}</div>
   <div class="modal-body">
     <div class="hint" style="margin-bottom:14px">“${esc(s.title)}”</div>
     <div class="lopt" id="favOpt" style="border-color:${FAVS.includes(id)?'var(--gold)':''}">
@@ -1448,7 +1448,7 @@ function renderEditor(){
     <button class="btn" id="addSection" style="width:100%;justify-content:center;margin:4px 0 20px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Agregar estrofa</button>
 `;
 
-  if(tgt==="song"){
+  if(tgt==="song" && isAdmin()){
     // ---- moderación de enlace y comentarios (solo admin) ----
     const lnk=LINKS[id]||null;
     const cms=COMMENTS[id]||[];
@@ -1481,8 +1481,8 @@ function renderEditor(){
 
   html+=`<div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px">
       <button class="btn primary" id="saveEdit">${saveIcon} ${saveLbl}</button>
-      ${tgt==="song"&&isEdited(id)?`<button class="btn danger" id="restoreEdit">Restaurar original</button>`:""}
-      ${tgt==="song"?`<button class="btn danger" id="deleteSong" style="margin-left:auto">🗑 Eliminar canción</button>`:""}
+      ${tgt==="song"&&isAdmin()&&isEdited(id)?`<button class="btn danger" id="restoreEdit">Restaurar original</button>`:""}
+      ${tgt==="song"&&isAdmin()?`<button class="btn danger" id="deleteSong" style="margin-left:auto">🗑 Eliminar canción</button>`:""}
     </div>
   </div>`;
   $main.innerHTML=html;
@@ -1762,9 +1762,16 @@ function adminPanel(){
       const k=inp.dataset.coll, v=inp.value.trim();
       if(v){ COLLECTIONS[k]=v; updates.push({id:k,label:v}); }
     });
-    // Guardar sort_order según posición actual
+    // Try to save with sort_order (for DBs that have the column)
     const orderUpdates=orderedKeys.map((k,i)=>({id:k,label:COLLECTIONS[k]||k,sort_order:i}));
-    if(orderUpdates.length) await db.from("collections").upsert(orderUpdates);
+    const {error:orderErr} = await db.from("collections").upsert(orderUpdates);
+    if(orderErr){
+      // Fallback: upsert without sort_order (column might not exist yet)
+      if(updates.length){
+        const {error:e2}=await db.from("collections").upsert(updates);
+        if(e2){toast("Error al guardar: "+e2.message);return;}
+      }
+    }
     COLLECTIONS_ORDER=[...orderedKeys];
     toast("Colecciones actualizadas"); closeModal(); render();
   };
@@ -1778,9 +1785,21 @@ function openNewCollectionModal(orderedKeys, reRenderRows){
   const nm=(window.prompt("Nombre de la nueva colección:")||"").trim();
   if(!nm)return;
   const key=newCollKey();
-  db.from("collections").insert({id:key,label:nm,sort_order:orderedKeys.length,created_by:SESSION?.user.id||null})
+  const baseInsert={id:key,label:nm,created_by:SESSION?.user.id||null};
+  const insertWithOrder={...baseInsert,sort_order:orderedKeys.length};
+  db.from("collections").insert(insertWithOrder)
     .then(({error})=>{
-      if(error){toast("Error: "+error.message);return;}
+      if(error){
+        // Fallback: try without sort_order (column may not exist yet)
+        return db.from("collections").insert(baseInsert).then(({error:e2})=>{
+          if(e2){toast("Error: "+e2.message);return;}
+          return {ok:true};
+        });
+      }
+      return {ok:true};
+    })
+    .then(res=>{
+      if(!res||!res.ok)return;
       COLLECTIONS[key]=nm;
       orderedKeys.push(key);
       COLLECTIONS_ORDER=[...orderedKeys];
@@ -2234,16 +2253,22 @@ function openAuthModal(){
 async function loadSharedData(){
   const [songsRes, collsRes, linksRes, cmtsRes, visitsRes] = await Promise.all([
     db.from("songs").select("*").eq("hidden",false).order("title"),
-    db.from("collections").select("*").order("sort_order").order("created_at"),
+    db.from("collections").select("*").order("created_at"),
     db.from("song_links").select("*"),
     db.from("song_comments").select("*").order("created_at"),
-    db.from("song_visits").select("song_id,visit_count")
+    db.from("song_visits").select("song_id,visit_count").then(r=>r).catch(()=>({data:[],error:null}))
   ]);
   SONGS={};
   for(const s of songsRes.data||[]) SONGS[s.id]=s;
+  // Sort collections by sort_order if available (column may not exist in older DBs)
+  const rawColls = (collsRes.data||[]);
+  const hasSortOrder = rawColls.length>0 && rawColls[0].sort_order!=null;
+  const sortedColls = hasSortOrder
+    ? rawColls.slice().sort((a,b)=>(a.sort_order??999)-(b.sort_order??999))
+    : rawColls;
   COLLECTIONS={general:"General"};
   COLLECTIONS_ORDER=["general"];
-  for(const c of collsRes.data||[]){
+  for(const c of sortedColls){
     COLLECTIONS[c.id]=c.label;
     if(!COLLECTIONS_ORDER.includes(c.id)) COLLECTIONS_ORDER.push(c.id);
   }
