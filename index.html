@@ -974,7 +974,7 @@ function renderLists(){
   </div>`;
 
   if(LISTS.length===0){
-    html+=`<div class="empty" style="padding:40px 20px"><div class="big">Aún no tienes listas</div><div>Crea una para armar el cancionero de una misa o jornada. NO SE GUARDARÁN SI NO INICIAS SESIÓN ARRIBA EN LA FLECHA</div></div>`;
+    html+=`<div class="empty" style="padding:40px 20px"><div class="big">Aún no tienes listas</div><div>Crea una para armar el cancionero de una misa o jornada.</div></div>`;
   }
   for(const L of LISTS){
     html+=`<div class="list-card" data-openlist="${L.id}">
@@ -1151,7 +1151,7 @@ function repSaveAsList(){
 }
 
 function createList(){
-  const name=prompt("Nombre de la lista (p. ej. “Misa domingo”, “Adoracion cantada”):","");
+  const name=prompt("Nombre de la lista (p. ej. “Misa domingo”, “Jornada TSA”):","");
   if(name && name.trim()){ LISTS.push({id:uid(),name:name.trim(),songIds:[]}); savePersonalState(); render(); }
 }
 function renameList(lid){
@@ -1605,7 +1605,7 @@ Te entregaré un PDF con canciones (letras y acordes). Devuélveme ÚNICAMENTE u
     {
       "title": "TÍTULO EN MAYÚSCULAS",
       "categorias": ["<una o más categorías permitidas>"],
-      "liturgica": true,
+
       "capo": 0,
       "credits": "<autor o fuente, opcional>",
       "sections": [
@@ -1621,7 +1621,6 @@ Te entregaré un PDF con canciones (letras y acordes). Devuélveme ÚNICAMENTE u
 
 Reglas:
 - "categorias" es una LISTA (puede llevar más de una). Categorías permitidas: entrada, perdon, gloria, salmos, evangelio, ofertorio, santo, paz_cordero, comunion, espiritu_santo, maria, matrimonio, navidad, misiones, miscelanea. Si no calza ninguna, usa "miscelanea". NO inventes otras.
-- "liturgica": true si la canción es para la liturgia de la misa (entrada, salmo, ofertorio, santo, comunión, etc.); false si es de otro tipo (animación, oración, misiones no litúrgicas). Si no estás seguro, omite el campo.
 - "capo": número de traste del cejillo (0 o omítelo si no lleva cejillo). Si la partitura indica "Cejillo III" o "Capo 3", pon 3.
 - NO incluyas "coleccion": el nombre de la colección lo asigna la app al importar.
 - "sections" es una lista de estrofas; cada estrofa es una lista de líneas. Cada línea tiene "lyric" (texto) y/o "chords" (acordes).
@@ -1681,12 +1680,21 @@ async function handleImportFile(ev){
         if(typeof s.lyrics==="string"){ sections=[s.lyrics.split("\n").map(l=>({lyric:l}))]; }
         else sections=[];
       }
-      sections=(sections||[]).map(sec=>Array.isArray(sec)?sec.map(ln=>{
-        if(typeof ln==="string")return {lyric:ln};
-        const o={}; const ly=(ln.lyric??ln.letra??"").toString(); if(ly)o.lyric=ly; else o.lyric="";
-        const ch=(ln.chords||ln.acordes||"").toString().trim();
-        if(ch)o.chords=ch; return o;
-      }):[]).filter(sec=>sec.length);
+      sections=(sections||[]).map(sec=>{
+        if(!Array.isArray(sec))return [];
+        const lines=[];
+        for(const ln of sec){
+          if(typeof ln==="string"){lines.push({lyric:ln});continue;}
+          const ch=(ln.chords||ln.acordes||"").toString().trim();
+          const ly=(ln.lyric??ln.letra??"").toString();
+          if(ly.includes("\n")){
+            ly.split("\n").forEach(sl=>lines.push(ch&&!sl?{lyric:"",chords:ch}:{lyric:sl,...(ch?{chords:ch}:{})}));
+          } else {
+            const o={lyric:ly||""};if(ch)o.chords=ch;lines.push(o);
+          }
+        }
+        return lines;
+      }).filter(sec=>sec.length);
       if(!title && !sections.length) continue;
       // categorías (array o singular legacy)
       let rawc = Array.isArray(s.categorias)?s.categorias : (s.categoria?[s.categoria]:(s.category?[s.category]:[]));
