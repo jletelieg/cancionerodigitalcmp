@@ -532,10 +532,16 @@ function effective(id){ return SONGS[id]||null; }
 function isEdited(){ return false; }
 
 // colecciones (en el orden guardado en COLLECTIONS_ORDER)
+// Incluye también claves usadas por canciones aunque no estén en la tabla collections
 function allCollKeys(){
-  const ordered=[...COLLECTIONS_ORDER.filter(k=>COLLECTIONS[k]||k==="general")];
-  Object.keys(COLLECTIONS).forEach(k=>{if(!ordered.includes(k))ordered.push(k);});
-  if(!ordered.includes("general"))ordered.unshift("general");
+  const set=new Set(["general"]);
+  COLLECTIONS_ORDER.forEach(k=>set.add(k));
+  Object.keys(COLLECTIONS).forEach(k=>set.add(k));
+  // Agregar claves de colección que aparecen en canciones aunque no estén en COLLECTIONS
+  Object.values(SONGS).forEach(s=>{ if(s.coleccion) set.add(s.coleccion); });
+  // Respetar el orden guardado primero, luego el resto
+  const ordered=[...COLLECTIONS_ORDER.filter(k=>set.has(k))];
+  for(const k of set){ if(!ordered.includes(k)) ordered.push(k); }
   return ordered;
 }
 
@@ -1692,22 +1698,38 @@ function openAdminSettings(){
   adminPanel();
 }
 function adminPanel(){
-  // Usar COLLECTIONS_ORDER para el orden
-  let orderedKeys=COLLECTIONS_ORDER.filter(k=>COLLECTIONS[k]);
-  // Añadir cualquier clave no listada (por compatibilidad)
+  // Claves en el orden guardado
+  let orderedKeys=[...COLLECTIONS_ORDER.filter(k=>COLLECTIONS[k]||k==="general")];
+  // Agregar cualquier clave usada por canciones aunque no esté registrada en COLLECTIONS
+  const songCollKeys=new Set(Object.values(SONGS).map(s=>s.coleccion).filter(Boolean));
+  songCollKeys.forEach(k=>{ if(!orderedKeys.includes(k)) orderedKeys.push(k); });
+  // Agregar el resto de allCollKeys por compatibilidad
   allCollKeys().forEach(k=>{if(!orderedKeys.includes(k))orderedKeys.push(k);});
 
+  // Detectar claves sin etiqueta en la tabla collections (colecciones "huérfanas")
+  const orphaned=orderedKeys.filter(k=>k!=="general"&&!COLLECTIONS[k]);
+  const orphanHint=orphaned.length>0
+    ?`<div class="hint" style="background:var(--gold-bg);border-left:3px solid var(--gold);border-radius:8px;padding:8px 12px;margin-bottom:14px">
+        ⚠ Hay ${orphaned.length} colección(es) que las canciones ya usan pero no tienen nombre oficial registrado (aparecen con su clave interna en vez de un nombre visible). Asígnales un nombre aquí y guarda.
+      </div>`
+    :"";
+
   function buildCollRows(keys){
-    return keys.map((k,i)=>`
+    return keys.map((k,i)=>{
+      const isOrphan=k!=="general"&&!COLLECTIONS[k];
+      return `
       <div class="coll-admin-row" data-k="${esc(k)}" data-i="${i}">
         <div class="coll-order-btns">
           <button class="txt-mini" data-cup="${i}" ${i===0?"disabled style='opacity:.3'":""}>↑</button>
           <button class="txt-mini" data-cdown="${i}" ${i===keys.length-1?"disabled style='opacity:.3'":""}>↓</button>
         </div>
-        <input data-coll="${esc(k)}" value="${esc(collLabel(k))}" placeholder="Nombre de la colección">
+        <input data-coll="${esc(k)}" value="${esc(collLabel(k))}" placeholder="Nombre de la colección"
+          style="${isOrphan?"border-color:var(--gold);background:var(--gold-bg)":""}">
+        ${isOrphan?`<span title="Sin nombre registrado — dale un nombre y guarda" style="color:var(--gold);font-size:13px;flex-shrink:0">⚠</span>`:""}
         ${k==="general"?"":
           `<button class="txt-mini del" data-cdel="${esc(k)}" title="Eliminar colección">🗑</button>`}
-      </div>`).join("");
+      </div>`;
+    }).join("");
   }
 
   const pendSection = PENDING_COUNT>0 ? `
@@ -1721,6 +1743,7 @@ function adminPanel(){
   <div class="modal-body">
     <div class="field"><label>Colecciones</label>
       <div class="hint" style="margin-top:0;margin-bottom:12px">Reordena, renombra o elimina colecciones. Guarda antes de crear una nueva.</div>
+      ${orphanHint}
       <div id="adminCollRows">${buildCollRows(orderedKeys)}</div>
       <button class="btn sm" id="addCollBtn" style="margin-top:8px">➕ Nueva colección</button>
     </div>
@@ -1757,20 +1780,19 @@ function adminPanel(){
   document.getElementById("addCollBtn").onclick=()=>openNewCollectionModal(orderedKeys,reRenderRows);
 
   document.getElementById("saveColls").onclick=async()=>{
-    const updates=[];
+    // Leer etiquetas desde los inputs
     document.querySelectorAll("[data-coll]").forEach(inp=>{
       const k=inp.dataset.coll, v=inp.value.trim();
-      if(v){ COLLECTIONS[k]=v; updates.push({id:k,label:v}); }
+      if(v) COLLECTIONS[k]=v;
     });
-    // Try to save with sort_order (for DBs that have the column)
-    const orderUpdates=orderedKeys.map((k,i)=>({id:k,label:COLLECTIONS[k]||k,sort_order:i}));
-    const {error:orderErr} = await db.from("collections").upsert(orderUpdates);
-    if(orderErr){
-      // Fallback: upsert without sort_order (column might not exist yet)
-      if(updates.length){
-        const {error:e2}=await db.from("collections").upsert(updates);
-        if(e2){toast("Error al guardar: "+e2.message);return;}
-      }
+    // Upsert de todas las colecciones (incluye creación de entradas para claves huérfanas)
+    const upsertRows=orderedKeys.map((k,i)=>({id:k,label:COLLECTIONS[k]||k,sort_order:i}));
+    const {error} = await db.from("collections").upsert(upsertRows,{onConflict:"id"});
+    if(error){
+      // Fallback sin sort_order (por si la columna no existe aún)
+      const fallback=orderedKeys.map(k=>({id:k,label:COLLECTIONS[k]||k}));
+      const {error:e2} = await db.from("collections").upsert(fallback,{onConflict:"id"});
+      if(e2){toast("Error al guardar: "+e2.message);return;}
     }
     COLLECTIONS_ORDER=[...orderedKeys];
     toast("Colecciones actualizadas"); closeModal(); render();
@@ -1781,31 +1803,25 @@ function adminPanel(){
 }
 
 function openNewCollectionModal(orderedKeys, reRenderRows){
-  // Cerrar modal actual temporalmente y mostrar uno nuevo
   const nm=(window.prompt("Nombre de la nueva colección:")||"").trim();
   if(!nm)return;
   const key=newCollKey();
-  const baseInsert={id:key,label:nm,created_by:SESSION?.user.id||null};
-  const insertWithOrder={...baseInsert,sort_order:orderedKeys.length};
-  db.from("collections").insert(insertWithOrder)
-    .then(({error})=>{
-      if(error){
-        // Fallback: try without sort_order (column may not exist yet)
-        return db.from("collections").insert(baseInsert).then(({error:e2})=>{
-          if(e2){toast("Error: "+e2.message);return;}
-          return {ok:true};
-        });
-      }
-      return {ok:true};
-    })
-    .then(res=>{
-      if(!res||!res.ok)return;
-      COLLECTIONS[key]=nm;
-      orderedKeys.push(key);
-      COLLECTIONS_ORDER=[...orderedKeys];
-      // Preguntar si quiere añadir canciones a esta nueva colección
-      openAssignSongsModal(key, nm);
-    });
+  (async()=>{
+    const baseData={id:key,label:nm,created_by:SESSION?.user.id||null};
+    // Intentar con sort_order primero
+    let {error}=await db.from("collections").insert({...baseData,sort_order:orderedKeys.length});
+    if(error){
+      // Fallback sin sort_order (columna puede no existir aún)
+      const res=await db.from("collections").insert(baseData);
+      error=res.error;
+    }
+    if(error){toast("Error al crear colección: "+error.message);return;}
+    COLLECTIONS[key]=nm;
+    orderedKeys.push(key);
+    COLLECTIONS_ORDER=[...orderedKeys];
+    // Ofrecer asignar canciones a esta nueva colección
+    openAssignSongsModal(key, nm);
+  })();
 }
 
 function openAssignSongsModal(collKey, collName){
