@@ -980,6 +980,10 @@ function renderSong(){
       .concat(versions.map(vid=>`<option value="${vid}"${id===vid?" selected":""}>${esc(SONGS[vid].version_label||"Versión")}</option>`)).join("");
     return `<select id="versionSel" class="coll-select" style="margin-top:8px">${opts}</select>`;
   })() : "";
+  const extraActionsHTML = isLoggedIn() ? `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:9px">
+      <button class="txt-mini" id="addVersionBtn" style="color:var(--indigo);font-weight:700">+ Agregar versión de esta canción</button>
+      ${isAdmin()?`<button class="txt-mini" id="histBtn" style="text-decoration:underline">Ver historial</button>`:""}
+    </div>` : "";
 
   let html=`<div class="song-view">
     <button class="sv-back" id="back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg> Biblioteca</button>
@@ -994,6 +998,7 @@ function renderSong(){
       </div>
       ${versionSelHTML}
       ${s.credits?`<div class="sv-credits">✍ ${esc(s.credits)}</div>`:""}
+      ${extraActionsHTML}
     </div>
 
     <div class="ribbon">
@@ -1110,6 +1115,8 @@ function renderSong(){
   const upd=()=>{ TRANS[id]=((TRANS[id]||0)); savePersonalState(); render(); };
   $main.querySelector("#back").onclick=closeSong;
   const vsel=$main.querySelector("#versionSel"); if(vsel)vsel.onchange=()=>openSong(parseId(vsel.value));
+  const avb=$main.querySelector("#addVersionBtn"); if(avb)avb.onclick=()=>startAddVersion(baseId);
+  const hb=$main.querySelector("#histBtn"); if(hb)hb.onclick=()=>openSongHistoryModal(id);
   $main.querySelector("#tDown").onclick=()=>{TRANS[id]=(shift-1);if(TRANS[id]===0)delete TRANS[id];savePersonalState();render()};
   $main.querySelector("#tUp").onclick=()=>{TRANS[id]=(shift+1);if(TRANS[id]===0)delete TRANS[id];savePersonalState();render()};
   $main.querySelector("#tReset").onclick=()=>{delete TRANS[id];savePersonalState();render()};
@@ -1500,12 +1507,28 @@ function startAddManual(){
   window.scrollTo(0,0);
   render();
 }
+// editor para una nueva versión de una canción existente (parte de una copia de la base)
+function startAddVersion(baseId){
+  if(!isLoggedIn()){ openAuthModal(); return; }
+  const base=SONGS[baseId]; if(!base)return;
+  const siblings=songVersions(baseId).length;
+  STATE.editing=true; STATE.editTarget="new_version"; STATE.view="song"; STATE.songId=null;
+  STATE.editDraft={
+    title:base.title, categorias:catsOf(base), liturgica:(base.liturgica===undefined?null:base.liturgica),
+    coleccion:collOf(base), credits:base.credits||"", capo:+(base.capo||0),
+    sections: JSON.parse(JSON.stringify(base.sections||[[{lyric:"",chords:""}]])),
+    versionLabel:"Versión "+(siblings+2),
+    _versionParent: baseId, _versionParentTitle: base.title
+  };
+  window.scrollTo(0,0);
+  render();
+}
 
 function renderEditor(){
   const id=STATE.songId, d=STATE.editDraft;
   const tgt=STATE.editTarget;
-  const heading = tgt==="new" ? "Nueva canción" : tgt==="staged" ? "Revisar canción importada" : tgt==="pending_approve" ? "Revisar sugerencia" : isAdmin() ? "Editar canción" : "Sugerir edición";
-  const backLbl = tgt==="staged" ? "Volver a revisión" : tgt==="pending_approve" ? "Volver a pendientes" : "Cancelar";
+  const heading = tgt==="new" ? "Nueva canción" : tgt==="new_version" ? `Nueva versión de "${esc(d._versionParentTitle||"")}"` : tgt==="staged" ? "Revisar canción importada" : tgt==="pending_approve" ? "Revisar sugerencia" : isAdmin() ? "Editar canción" : "Sugerir edición";
+  const backLbl = tgt==="staged" ? "Volver a revisión" : tgt==="pending_approve" ? "Volver a pendientes" : tgt==="new_version" ? "Cancelar" : "Cancelar";
 
   const sel=new Set(d.categorias||[]);
   const catTags=CAT_ORDER.map(c=>`<button type="button" class="tagsel${sel.has(c)?" on":""}" data-cattag="${c}"><span class="dot" style="background:${catColor(c)}"></span>${esc(catLabel(c))}</button>`).join("");
@@ -1520,6 +1543,7 @@ function renderEditor(){
     <div class="sv-head"><h1 class="sv-title">${heading}</h1>
       <div class="sv-meta">Acordes en notación latina (SOL, lam, RE/FA#…).${tgt==="pending_approve"?` · <button type="button" id="viewOriginalBtn" class="txt-mini" style="color:var(--indigo);font-weight:700;text-decoration:underline">Ver original</button>`:""}</div></div>
 
+    ${tgt==="new_version"?`<div class="field"><label>Nombre de la versión</label><input id="edVersionLabel" value="${esc(d.versionLabel||"")}" placeholder="ej. Acústica, En vivo, Coro MP…"></div>`:""}
     <div class="field"><label>Título</label><input id="edTitle" value="${esc(d.title)}"></div>
 
     <div class="field"><label>Categorías (etiquetas — puedes elegir varias)</label>
@@ -1599,6 +1623,7 @@ function renderEditor(){
 
   let saveLbl, saveIcon=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5L20 7"/></svg>`;
   if(tgt==="new") saveLbl="Agregar a la plataforma";
+  else if(tgt==="new_version") saveLbl=isAdmin()?"Agregar versión":"Enviar versión para revisión";
   else if(tgt==="staged") saveLbl="Guardar y volver a revisión";
   else if(tgt==="pending_approve") saveLbl="Aprobar y guardar";
   else if(isAdmin()) saveLbl="Guardar correcciones";
@@ -1624,6 +1649,7 @@ function readEditorIntoDraft(){
   const cp=document.getElementById("edCapo").value.trim();
   d.capo = cp===""?0:(Math.max(0,parseInt(cp,10)||0));
   const cr=document.getElementById("edCredits"); if(cr)d.credits=cr.value.trim();
+  const vl=document.getElementById("edVersionLabel"); if(vl)d.versionLabel=vl.value.trim();
   document.querySelectorAll("[data-ch]").forEach(inp=>{
     const [si,li]=inp.dataset.ch.split("-").map(Number);
     d.sections[si][li].chords=inp.value;
@@ -1641,6 +1667,7 @@ function attachEditorEvents(id){
     STATE.editing=false;
     if(tgt==="staged"){ STATE.view="review"; }
     else if(tgt==="new"){ STATE.view="list"; }
+    else if(tgt==="new_version"){ STATE.view="song"; STATE.songId=STATE.editDraft._versionParent||null; }
     else if(tgt==="pending_approve"){ openPendingEditsPanel(); return; }
     else { STATE.editTarget="song"; }
     render();
@@ -1666,6 +1693,10 @@ function attachEditorEvents(id){
         return;
       }
       finalizeNewSong(songObj, null, null);
+      return;
+    }
+    if(tgt==="new_version"){
+      finalizeNewSong(songObj, d._versionParent, d.versionLabel);
       return;
     }
     if(tgt==="staged"){
@@ -1882,8 +1913,9 @@ function openSettings(){
 }
 
 // ---- Ajustes de admin (solo si is_admin=true en la cuenta) ----
-function openAdminSettings(){
+async function openAdminSettings(){
   if(!isAdmin()){ toast("Solo el administrador puede acceder a este panel"); return; }
+  await Promise.all([loadPendingEdits(), loadPendingImports()]);
   adminPanel();
 }
 function adminPanel(){
@@ -2453,7 +2485,7 @@ async function adminApproveImport(){
   }
   const rows=st.map(s=>{
     const obj=buildPayloadSong(s);
-    return Object.assign({},obj,{coleccion:obj.coleccion||collKey||"general",is_base:false,hidden:false,created_by:STATE.reviewSubmittedBy||null});
+    return Object.assign({},obj,{coleccion:obj.coleccion||collKey||"general",is_base:false,hidden:false,created_by:SESSION.user.id});
   });
   const {data,error}=await db.from("songs").insert(rows).select();
   if(error){toast("Error al aprobar: "+error.message);return;}
@@ -2644,8 +2676,14 @@ function notifIcon(type){
   if(type==="edit_approved"||type==="import_approved") return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>`;
   return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
 }
-function openNotificationsPanel(){
+async function openNotificationsPanel(){
   if(!isLoggedIn())return;
+  openModal(`<div class="modal-head"><h3>Notificaciones</h3>${closeBtn()}</div><div class="modal-body"><div class="hint">Cargando…</div></div>`);
+  await loadNotifications();
+  updateNotifBtn();
+  renderNotificationsPanel();
+}
+function renderNotificationsPanel(){
   let html=`<div class="modal-head"><h3>Notificaciones</h3>${closeBtn()}</div><div class="modal-body">`;
   if(!NOTIFICATIONS.length){
     html+=`<div class="empty" style="padding:40px 0"><div class="big">Sin notificaciones</div><div>Te avisaremos aquí cuando se revisen tus sugerencias.</div></div>`;
@@ -2923,6 +2961,34 @@ function logSongHistory(songId,changeType,diff){
   db.from("song_history").insert({song_id:songId,changed_by:SESSION?.user?.id||null,change_type:changeType,diff:diff||{}}).catch(()=>{});
 }
 
+// ---- Historial de una canción (song_history) ----
+async function openSongHistoryModal(songId){
+  const s=SONGS[songId]||{};
+  openModal(`<div class="modal-head"><h3>Historial — ${esc(s.title||"")}</h3>${closeBtn()}</div><div class="modal-body" id="histBody"><div class="hint">Cargando…</div></div>`);
+  const {data,error}=await db.from("song_history").select("*").eq("song_id",songId).order("created_at",{ascending:false});
+  const body=document.getElementById("histBody");
+  if(!body)return; // el modal se cerró mientras cargaba
+  if(error){
+    body.innerHTML = error.message&&(error.message.includes("song_history")||error.message.includes("schema cache")||error.message.includes("does not exist"))
+      ? `<div class="hint">El historial todavía no está habilitado en la base de datos.</div>`
+      : `<div class="hint">No se pudo cargar el historial: ${esc(error.message)}</div>`;
+    return;
+  }
+  if(!data||!data.length){
+    body.innerHTML=`<div class="empty" style="padding:30px 0"><div class="big">Sin historial</div><div>No hay cambios registrados todavía para esta canción.</div></div>`;
+    return;
+  }
+  const typeLabel={created:"Creada",edited:"Editada",version_added:"Versión agregada",import_approved:"Importada y aprobada"};
+  body.innerHTML = data.map(h=>{
+    const date=h.created_at?new Date(h.created_at).toLocaleString("es-CL",{dateStyle:"medium",timeStyle:"short"}):"";
+    const extra=(h.diff&&h.diff.title&&h.diff.title!==s.title)?` — "${esc(h.diff.title)}"`:"";
+    return `<div class="pending-rev-card" style="margin-bottom:8px;padding:11px 14px">
+      <div class="pending-rev-title" style="font-size:14px">${typeLabel[h.change_type]||h.change_type}${extra}</div>
+      <div class="pending-rev-meta" style="margin-bottom:0">${date}</div>
+    </div>`;
+  }).join("");
+}
+
 // ---- Diff entre canción original y una sugerencia (edit_data) ----
 function flattenSongSections(secs){
   const out=[];
@@ -3091,6 +3157,7 @@ function openPendingEditsPanel(){
     PENDING_EDITS=PENDING_EDITS.filter(p=>String(p.id)!==String(pid));
     PENDING_COUNT=PENDING_EDITS.length;
     toast("Edición aprobada");
+    render();
     closeModal();
     if(PENDING_EDITS.length)openPendingEditsPanel();
   });
@@ -3129,6 +3196,7 @@ function openPendingEditsPanel(){
     PENDING_EDITS=PENDING_EDITS.filter(p=>String(p.id)!==String(pid));
     PENDING_COUNT=PENDING_EDITS.length;
     toast("Edición rechazada");
+    render();
     closeModal();
     if(PENDING_EDITS.length)openPendingEditsPanel();
   });
