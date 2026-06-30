@@ -2467,12 +2467,12 @@ async function loadPendingEdits(){
   if(!SESSION)return;
   try {
     if(isAdmin()){
-      const {data,error}=await db.from("pending_edits").select("*").eq("status","pending").order("created_at");
+      const {data,error}=await db.from("pending_edits").select("*").eq("status","pending").order("created_at",{ascending:false});
       if(error){ PENDING_EDITS=[]; PENDING_COUNT=0; return; } // tabla puede no existir aún
       PENDING_EDITS=data||[];
       PENDING_COUNT=PENDING_EDITS.length;
     } else {
-      const {data,error}=await db.from("pending_edits").select("id,song_id,status,created_at").eq("submitted_by",SESSION.user.id).eq("status","pending");
+      const {data,error}=await db.from("pending_edits").select("id,song_id,status,created_at").eq("submitted_by",SESSION.user.id);
       if(error){ MY_PENDING={}; return; } // tabla puede no existir aún
       MY_PENDING={};
       for(const p of data||[]) MY_PENDING[p.song_id]=p;
@@ -2495,17 +2495,18 @@ function openPendingEditsPanel(){
     const sTitle=s?s.title:"Canción desconocida";
     const date=p.created_at?new Date(p.created_at).toLocaleDateString("es-CL"):"";
     const by=p.submitter_name||"Usuario";
+    const editData=p.edit_data||{};
     html+=`<div class="pending-rev-card">
       <div class="pending-rev-title">${esc(sTitle)}</div>
       <div class="pending-rev-meta">Sugerido por <b>${esc(by)}</b> · ${date}</div>
       <details style="margin-bottom:8px">
         <summary style="cursor:pointer;font-size:12.5px;font-weight:600;color:var(--indigo)">Ver cambios propuestos</summary>
         <div style="margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.5">
-          Título: <b>${esc(p.edit_data?.title||"—")}</b><br>
-          Categorías: <b>${(p.edit_data?.categorias||[]).map(catLabel).join(", ")||"—"}</b><br>
-          Colección: <b>${esc(collLabel(p.edit_data?.coleccion||""))}</b><br>
-          Cejillo: <b>${p.edit_data?.capo||0}</b>
-          ${p.edit_data?.credits?`<br>Créditos: <b>${esc(p.edit_data.credits)}</b>`:""}
+          ${editData.title?`Título: <b>${esc(editData.title)}</b><br>`:""}
+          ${editData.categorias&&editData.categorias.length?`Categorías: <b>${editData.categorias.map(catLabel).join(", ")}</b><br>`:""}
+          ${editData.coleccion?`Colección: <b>${esc(collLabel(editData.coleccion))}</b><br>`:""}
+          ${editData.capo?`Cejillo: <b>${editData.capo}</b><br>`:""}
+          ${editData.credits?`Créditos: <b>${esc(editData.credits)}</b>`:""}
         </div>
       </details>
       <div class="pending-rev-actions">
@@ -2560,8 +2561,8 @@ function openPendingEditsPanel(){
 
   document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=async()=>{
     const pid=b.dataset.reject;
-    const note=prompt("Motivo del rechazo (opcional):")?.trim()||null;
-    await db.from("pending_edits").update({status:"rejected",admin_note:note,reviewed_at:new Date().toISOString()}).eq("id",pid);
+    prompt("Motivo del rechazo (opcional):")?.trim()||null; // mostrar diálogo pero no guardar
+    await db.from("pending_edits").update({status:"rejected",reviewed_at:new Date().toISOString()}).eq("id",pid);
     PENDING_EDITS=PENDING_EDITS.filter(p=>p.id!==pid);
     PENDING_COUNT=PENDING_EDITS.length;
     toast("Edición rechazada");
