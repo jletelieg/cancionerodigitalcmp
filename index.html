@@ -222,6 +222,15 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
   .sv-title{font-size:23px}
   .rib-key{min-width:40px}
 }
+/* En móvil muy estrecho, ocultar el texto "Cancionero" para que la barra de búsqueda tenga espacio */
+@media(max-width:480px){
+  .brand h1{display:none}
+  .top-inner{gap:8px;padding:9px 12px}
+  .feedback-tab span, .feedback-tab svg+*{display:none}
+  .tabs{gap:2px;padding:0 10px 8px}
+  .tab{padding:7px 10px;font-size:12.5px}
+  .feedback-tab{padding:7px 8px}
+}
 /* two-column (lyric | chords) */
 .body.two-col .section{margin-bottom:18px}
 .body.two-col .line2{display:grid;grid-template-columns:1fr minmax(0,40%);gap:16px;align-items:baseline;padding:1px 0}
@@ -374,10 +383,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
   <header class="top">
     <div class="top-inner">
       <div class="brand" id="brand">
-        <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <rect x="3" y="3" width="26" height="26" rx="6" fill="rgba(255,255,255,.12)"/>
-          <path d="M12 9.5v9.2a3 3 0 1 0 1.6 2.65V12.4l7-1.5v5.9a3 3 0 1 0 1.6 2.65V8z" fill="currentColor"/>
-        </svg>
+        <img class="mark" src="data:image/avif;base64,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" alt="Logo CMP" style="object-fit:contain">
         <div>
           <h1>Cancionero</h1>
           <small>Misión País</small>
@@ -1565,8 +1571,15 @@ function attachEditorEvents(id){
       // Usuario no-admin: guardar como sugerencia pendiente
       const row={song_id:id,edit_data:songObj,submitted_by:SESSION.user.id,
         submitter_name:PROFILE?.display_name||SESSION.user.email?.split("@")[0]||null,status:"pending"};
-      const {error}=await db.from("pending_edits").insert(row).select().single();
-      if(error){toast("Error al enviar: "+error.message);return;}
+      const {data,error}=await db.from("pending_edits").insert(row).select().single();
+      if(error){
+        if(error.message&&(error.message.includes("pending_edits")||error.message.includes("schema cache")||error.message.includes("does not exist"))){
+          toast("⚠ El administrador aún no habilitó las sugerencias. Usa el botón 'Reportar' para enviar cambios por email.");
+        } else {
+          toast("Error al enviar: "+error.message);
+        }
+        return;
+      }
       MY_PENDING[id]={song_id:id,status:"pending"};
       STATE.editing=false;
       toast("Sugerencia enviada. Quedará pendiente de revisión por el administrador.");
@@ -2452,15 +2465,19 @@ function setupAlphaBarHover(){
 // Carga ediciones pendientes (admin: todas; usuario: las propias)
 async function loadPendingEdits(){
   if(!SESSION)return;
-  if(isAdmin()){
-    const {data}=await db.from("pending_edits").select("*").eq("status","pending").order("created_at");
-    PENDING_EDITS=data||[];
-    PENDING_COUNT=PENDING_EDITS.length;
-  } else {
-    const {data}=await db.from("pending_edits").select("id,song_id,status,created_at").eq("submitted_by",SESSION.user.id).eq("status","pending");
-    MY_PENDING={};
-    for(const p of data||[]) MY_PENDING[p.song_id]=p;
-  }
+  try {
+    if(isAdmin()){
+      const {data,error}=await db.from("pending_edits").select("*").eq("status","pending").order("created_at");
+      if(error){ PENDING_EDITS=[]; PENDING_COUNT=0; return; } // tabla puede no existir aún
+      PENDING_EDITS=data||[];
+      PENDING_COUNT=PENDING_EDITS.length;
+    } else {
+      const {data,error}=await db.from("pending_edits").select("id,song_id,status,created_at").eq("submitted_by",SESSION.user.id).eq("status","pending");
+      if(error){ MY_PENDING={}; return; } // tabla puede no existir aún
+      MY_PENDING={};
+      for(const p of data||[]) MY_PENDING[p.song_id]=p;
+    }
+  } catch(e){ /* silenciar si la tabla no existe */ }
 }
 
 // Panel de revisión de pendientes (solo admin)
