@@ -745,6 +745,12 @@ let STATE = {
 const $main = document.getElementById("main");
 const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function romano(n){ const M=["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"]; return M[n]||String(n); }
+// 0-99 -> número tal cual; 100-999 -> "0.1k".."0.9k"; 1000+ -> "1k","1.1k","12.3k"...
+function formatVisits(n){
+  n=Math.max(0,+n||0);
+  if(n<100) return String(n);
+  return (n/1000).toFixed(1).replace(/\.0$/,"")+"k";
+}
 
 function render(){
   if(STATE.editing){ renderEditor(); return; }
@@ -886,6 +892,7 @@ function renderLibrary(){
           <div class="song-sub">
             ${tagChipsHTML(s)}
             <span>${esc(collLabel(collOf(s)))}</span>
+            ${STATE.topVisited?`<span class="capo-meta">🔥 ${formatVisits(VISITS[id]||0)} visita${(VISITS[id]||0)===1?"":"s"}</span>`:""}
           </div>
         </div>
         <div class="row-actions">
@@ -950,8 +957,13 @@ function openSong(id){
   window.scrollTo(0,0);
   const bar=document.getElementById("alphaBar");
   if(bar)bar.classList.remove("show");
-  render();
   trackVisit(id);
+  render();
+  if(isLoggedIn() && !isAdmin()){
+    Promise.all([loadPendingEdits(), loadPendingImports()]).then(()=>{
+      if(STATE.view==="song" && STATE.songId===id) render();
+    });
+  }
 }
 function closeSong(){
   STATE.view="list"; STATE.songId=null; STATE.editing=false; stopAutoscroll();
@@ -993,6 +1005,7 @@ function renderSong(){
         ${tagChipsHTML(s)}
         <span>${esc(collLabel(collOf(s)))}</span>
         ${capo>0?`<span class="capo-meta">Cejillo ${romano(capo)}</span>`:""}
+        <span class="capo-meta" style="color:var(--muted);background:var(--surface-2)">👁 ${formatVisits(VISITS[id]||0)} visita${(VISITS[id]||0)===1?"":"s"}</span>
         ${isEdited(id)?`<span class="editlock">✎ editada</span>`:""}
         ${isVersion(id)?`<span class="editlock" style="color:var(--indigo);background:var(--indigo)1a">${esc(s.version_label||"Versión")}</span>`:""}
       </div>
@@ -2854,13 +2867,16 @@ document.addEventListener("keydown",e=>{
 //  FUNCIONES NUEVAS v2
 // =================================================================
 
-// Registra una visita (anónima, fire-and-forget)
+// Registra una visita (anónima, fire-and-forget; cuenta tengas o no sesión)
 function trackVisit(id){
-  db.rpc("increment_visit",{song_id_param:id}).catch(()=>{
-    // Fallback si la función RPC no existe aún
-    db.from("song_visits").upsert({song_id:id,visit_count:(VISITS[id]||0)+1,last_visited:new Date().toISOString()});
-  });
   VISITS[id]=(VISITS[id]||0)+1;
+  db.rpc("increment_visit",{song_id_param:id}).then(({error})=>{
+    if(!error)return;
+    console.error("[song_visits] RPC increment_visit falló, usando respaldo:",error.message);
+    // Respaldo si el RPC no existe todavía en la base de datos
+    db.from("song_visits").upsert({song_id:id,visit_count:VISITS[id],last_visited:new Date().toISOString()})
+      .then(({error:e2})=>{ if(e2) console.error("[song_visits] respaldo también falló:",e2.message); });
+  }).catch(e=>console.error("[song_visits] excepción:",e));
 }
 
 // Renderiza la barra alfabética lateral (solo en vista de lista con 20+ canciones)
@@ -2950,7 +2966,7 @@ async function loadPendingEdits(){
       PENDING_EDITS=data||[];
       PENDING_COUNT=PENDING_EDITS.length;
     } else {
-      const {data,error}=await db.from("pending_edits").select("id,song_id,status,created_at").eq("submitted_by",SESSION.user.id);
+      const {data,error}=await db.from("pending_edits").select("id,song_id,status,created_at").eq("submitted_by",SESSION.user.id).eq("status","pending");
       if(error){ MY_PENDING={}; return; } // tabla puede no existir aún
       MY_PENDING={};
       for(const p of data||[]) MY_PENDING[p.song_id]=p;
