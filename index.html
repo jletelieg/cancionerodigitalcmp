@@ -37,7 +37,7 @@ html[data-theme="dark"]{
 html,body{margin:0;padding:0;height:100%}
 body{
   background:var(--bg); color:var(--ink); font-family:var(--sans);
-  -webkit-font-smoothing:antialiased; line-height:1.45;
+  -webkit-font-smoothing:antialiased; line-height:1.45; overflow-x:hidden;
   overscroll-behavior-y:none;
 }
 button{font-family:inherit;cursor:pointer;color:inherit}
@@ -139,10 +139,10 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .rib-btn.ghost{color:var(--faint)}
 
 /* lyric body */
-.body{font-size:var(--lyric-size);max-width:680px}
+.body{font-size:var(--lyric-size);max-width:680px;max-width:min(680px,100%)}
 .section{margin:0 0 24px}
 .line{margin:0 0 2px}
-.chordline{font-family:var(--mono);color:var(--gold);font-weight:600;font-size:.82em;letter-spacing:.02em;white-space:pre-wrap;line-height:1.35;margin-bottom:-1px}
+.chordline{font-family:var(--mono);color:var(--gold);font-weight:600;font-size:.82em;letter-spacing:.02em;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.35;margin-bottom:-1px}
 .lyricline{font-family:var(--serif);line-height:1.5}
 .lyricline.empty-l{height:.7em}
 .no-chords .chordline{display:none}
@@ -236,7 +236,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .body.two-col .line2{display:grid;grid-template-columns:1fr minmax(0,40%);gap:16px;align-items:baseline;padding:1px 0}
 .body.two-col .lyr2{font-family:var(--serif);line-height:1.55}
 .body.two-col .lyr2.empty-l{height:.6em}
-.body.two-col .chd2{font-family:var(--mono);color:var(--gold);font-weight:600;font-size:.82em;letter-spacing:.02em;white-space:pre-wrap;line-height:1.55}
+.body.two-col .chd2{font-family:var(--mono);color:var(--gold);font-weight:600;font-size:.82em;letter-spacing:.02em;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.55}
 .body.two-col.no-chords .chd2{display:none}
 .body.two-col.no-chords .line2{grid-template-columns:1fr}
 
@@ -358,6 +358,15 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .alpha-anchor-row{padding:12px 12px 2px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);pointer-events:none;user-select:none}
 /* Banner de edición pendiente propia */
 .pending-banner{display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1px solid var(--gold);border-radius:10px;padding:9px 14px;font-size:12.5px;font-weight:600;color:var(--gold);margin:12px 0}
+.dup-banner{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gold-bg);border:1px solid var(--gold);border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--gold);margin-top:8px}
+.notif-badge{position:absolute;top:1px;right:1px;display:flex;align-items:center;justify-content:center;background:var(--danger);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:999px;padding:0 4px}
+.notif-item{display:flex;gap:10px;align-items:flex-start;padding:11px 8px;border-bottom:1px solid var(--line);cursor:pointer}
+.notif-item:last-child{border-bottom:none}
+.notif-item.unread{background:var(--surface-2);border-radius:10px}
+.notif-item .notif-ico{flex-shrink:0;margin-top:2px}
+.notif-msg{font-size:13.5px;line-height:1.4;color:var(--ink)}
+.notif-item.unread .notif-msg{font-weight:700}
+.notif-date{font-size:11px;color:var(--faint);margin-top:3px}
 /* Filas de admin colecciones */
 .coll-admin-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .coll-admin-row input{flex:1;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--ink);outline:none}
@@ -397,6 +406,10 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
         </button>
       </div>
       <button class="iconbtn" id="authBtn" aria-label="Cuenta" title="Cuenta" style="font-size:12px;font-weight:700;min-width:32px">…</button>
+      <button class="iconbtn" id="notifBtn" aria-label="Notificaciones" title="Notificaciones" style="display:none;position:relative">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+      </button>
       <button class="iconbtn" id="themeBtn" aria-label="Tema" title="Cambiar tema"></button>
       <button class="iconbtn" id="settingsBtn" aria-label="Ajustes" title="Ajustes">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -522,6 +535,11 @@ let VISITS = {};             // { song_id: count }
 let PENDING_EDITS = [];      // admin: ediciones pendientes de revisión
 let PENDING_COUNT = 0;       // admin: número de pendientes
 let MY_PENDING = {};         // user: { song_id: pendingObj }
+let PENDING_IMPORTS = [];    // admin: canciones nuevas / cancioneros pendientes de revisión
+let PENDING_IMPORT_COUNT = 0;
+let MY_PENDING_IMPORTS = []; // user: mis propios envíos (manual/import)
+let NOTIFICATIONS = [];      // user: notificaciones propias
+let UNREAD_COUNT = 0;
 
 // auth
 let SESSION = null;
@@ -554,8 +572,9 @@ function allCollKeys(){
 // =================================================================
 //  MOTOR DE ACORDES (notación latina)
 // =================================================================
-const SHARP=[["DO",""],["DO","#"],["RE",""],["MI","b"],["MI",""],["FA",""],["FA","#"],["SOL",""],["LA","b"],["LA",""],["SI","b"],["SI",""]];
-const FLAT =[["DO",""],["RE","b"],["RE",""],["MI","b"],["MI",""],["FA",""],["SOL","b"],["SOL",""],["LA","b"],["LA",""],["SI","b"],["SI",""]];
+// Notación unificada (igual para todas las canciones, sin importar cómo se haya escrito el acorde original):
+// Do# (no Reb) · Re · Mib (no Re#) · Mi · Fa · Fa# (no Solb) · Sol · Sol# (no Lab) · La · Sib/Bb (no Lab) · Si
+const CANON=[["DO",""],["DO","#"],["RE",""],["MI","b"],["MI",""],["FA",""],["FA","#"],["SOL",""],["SOL","#"],["LA",""],["SI","b"],["SI",""]];
 const PC={DO:0,"DO#":1,REb:1,RE:2,"RE#":3,MIb:3,MI:4,FA:5,"FA#":6,SOLb:6,SOL:7,"SOL#":8,LAb:8,LA:9,"LA#":10,SIb:10,SI:11,DOb:11,FAb:4,"MI#":5,"SI#":0};
 const ROOT_RE=/^(SOL|DO|RE|MI|FA|LA|SI)([#b]?)(.*)$/i;
 function noteToPc(root,acc){const k=root.toUpperCase()+(acc==="b"?"b":acc);return PC[k]!==undefined?PC[k]:null}
@@ -569,7 +588,7 @@ function transSeg(seg,shift,flat){
   const root=m[1],acc=m[2],rest=m[3];
   const pc=noteToPc(root,acc); if(pc===null)return seg;
   const np=(((pc+shift)%12)+12)%12;
-  const t=flat?FLAT:SHARP, base=t[np][0], nacc=t[np][1];
+  const base=CANON[np][0], nacc=CANON[np][1];
   return applyCase(root,base)+nacc+rest;
 }
 function transChord(tok,shift,globalFlat){
@@ -605,7 +624,9 @@ function songHasBadChord(s){
 function chordsHTML(chords,shift,flat){
   if(!chords) return "";
   return chords.split(/(\s+)/).map(t=>{
-    if(/^\s*$/.test(t)) return t.replace(/ /g,"&nbsp;");
+    // runs de espacios: se conserva UN espacio normal (punto de quiebre para que la línea
+    // pueda envolver en pantallas angostas) y el resto como &nbsp; para no perder el alineado
+    if(/^\s*$/.test(t)) return t.length<=1 ? t : " "+"&nbsp;".repeat(t.length-1);
     const st=chordTokenStatus(t);
     if(st==="bad") return `<span class="chord-bad" title="No se reconoce como acorde: no cambia de tono. Repórtalo o corrígelo.">${esc(t)}</span>`;
     if(st==="neutral") return esc(t);
@@ -619,11 +640,71 @@ function chordsHTML(chords,shift,flat){
 function norm(s){return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
 // índice de letra para búsqueda
 // búsqueda dinámica sobre SONGS (no hay índice estático)
+function songTitleText(id){ const s=effective(id); return norm(s?s.title||"":""); }
 function songSearchText(id){
   const s=effective(id); if(!s) return "";
   let txt=s.title||"";
   for(const sec of s.sections||[]) for(const ln of sec) txt+=" "+(ln.lyric||"");
   return norm(txt);
+}
+
+// ---- Versiones de canciones ----
+// Una canción "versión" tiene parent_song_id apuntando a la original.
+// La original (o cualquier canción sin versiones) tiene parent_song_id=null.
+function songVersions(baseId){
+  return allIds().filter(id=>{ const s=SONGS[id]; return s && s.parent_song_id===baseId; });
+}
+function baseSongId(id){ const s=SONGS[id]; return (s&&s.parent_song_id)?s.parent_song_id:id; }
+function isVersion(id){ const s=SONGS[id]; return !!(s&&s.parent_song_id); }
+// texto de búsqueda agregando título/letra de todas las versiones (para que una
+// búsqueda que solo calza en una versión igual encuentre la canción "familia")
+function familySearchText(id){
+  let txt=songSearchText(id);
+  songVersions(id).forEach(vid=>{ txt+=" "+songSearchText(vid); });
+  return txt;
+}
+function familyTitleMatches(id,q){
+  if(songTitleText(id).includes(q)) return true;
+  return songVersions(id).some(vid=>songTitleText(vid).includes(q));
+}
+
+// ---- Detección de duplicados (título normalizado + similitud de letra) ----
+function bigrams(s){
+  const out=[]; for(let i=0;i<s.length-1;i++) out.push(s.substr(i,2));
+  return out;
+}
+function diceCoeff(a,b){
+  a=a||""; b=b||"";
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  const A=bigrams(a), B=bigrams(b);
+  if(!A.length||!B.length) return 0;
+  const mapB={}; B.forEach(g=>mapB[g]=(mapB[g]||0)+1);
+  let inter=0;
+  A.forEach(g=>{ if(mapB[g]>0){ inter++; mapB[g]--; } });
+  return 2*inter/(A.length+B.length);
+}
+function songLyricNorm(sections){
+  let t=""; (sections||[]).forEach(sec=>(sec||[]).forEach(ln=>t+=" "+(ln.lyric||"")));
+  return norm(t);
+}
+// Busca la canción ya publicada más parecida a (title, sections). Solo compara
+// contra originales (no contra otras versiones) para no ofrecer "versión de una versión".
+// Umbral: título muy parecido (>=82%) basta solo, o un puntaje combinado >=55%.
+function findDuplicateCandidate(title, sections){
+  const nt=norm(title||"");
+  const lyr=songLyricNorm(sections);
+  let best=null;
+  for(const id of allIds()){
+    const s=SONGS[id]; if(!s || s.parent_song_id) continue;
+    const ts=diceCoeff(nt, norm(s.title||""));
+    const ls=diceCoeff(lyr, songLyricNorm(s.sections));
+    const score=ts*0.6 + ls*0.4;
+    if(ts>=0.82 || score>=0.55){
+      if(!best || score>best.score) best={id, score, titleSim:ts, lyricSim:ls};
+    }
+  }
+  return best;
 }
 
 // =================================================================
@@ -644,6 +725,15 @@ let STATE = {
   editPendingId:null,     // uuid del pending_edit que se está aprobando
   editUnlocked:false,
   staged:null,
+  reviewMode:"submit",    // "submit" (usuario subiendo) | "admin" (admin revisando un pending_imports)
+  reviewPendingId:null,   // id de pending_imports cuando reviewMode="admin"
+  reviewKind:null,        // "manual" | "import"
+  reviewSubmittedBy:null,
+  reviewSubmitterName:null,
+  reviewCollection:null,  // {name,key}
+  reviewEdited:false,     // admin editó/quitó alguna canción antes de aprobar
+  importCollName:null,
+  importCollKey:null,
   noCapo:false,
   topVisited:false,       // ver modo "más visitadas"
   showCollFilter:false,   // mostrar panel de filtro de colecciones
@@ -661,7 +751,10 @@ function render(){
   if(STATE.view==="review"){ renderReview(); return; }
   if(STATE.view==="song"){ renderSong(); return; }
   if(STATE.tab==="repertoire"){ renderRepertoire(); return; }
-  if(STATE.tab==="lists" && !STATE.activeList){ renderLists(); return; }
+  if(STATE.tab==="lists" && !STATE.activeList){
+    if(!isLoggedIn()){ STATE.tab="library"; renderLibrary(); openAuthModal(); return; }
+    renderLists(); return;
+  }
   renderLibrary();
 }
 
@@ -677,12 +770,12 @@ function matchingIds(){
   const cats = STATE.cats;
   const colls = STATE.colls;
   const L = getActiveList();
-  let ids = L ? L.songIds.filter(id=>exists(id)) : allIds();
+  let ids = L ? L.songIds.filter(id=>exists(id)) : allIds().filter(id=>!isVersion(id));
   // Modo "más visitadas": mostrar top 50 sin filtros
   if(STATE.topVisited && !q && !cats.size && !colls.size && !L){
     return [...ids].sort((a,b)=>(VISITS[b]||0)-(VISITS[a]||0)).slice(0,50);
   }
-  return ids.filter(id=>{
+  const filtered = ids.filter(id=>{
     const s = effective(id);
     if(cats.size){
       const sc = catsOf(s);
@@ -695,9 +788,18 @@ function matchingIds(){
       if(!okCat) return false;
     }
     if(colls.size && !colls.has(collOf(s))) return false;
-    if(q && !songSearchText(id).includes(q)) return false;
+    if(q && !(L?songSearchText(id):familySearchText(id)).includes(q)) return false;
     return true;
   });
+  if(q){
+    // primero las canciones cuyo título (o el de alguna versión) contiene la búsqueda
+    return filtered.slice().sort((a,b)=>{
+      const ta = (L?songTitleText(a).includes(q):familyTitleMatches(a,q)) ? 0 : 1;
+      const tb = (L?songTitleText(b).includes(q):familyTitleMatches(b,q)) ? 0 : 1;
+      return ta - tb;
+    });
+  }
+  return filtered;
 }
 
 function renderLibrary(){
@@ -780,7 +882,7 @@ function renderLibrary(){
       }
       html += `<div class="song-row" data-open="${id}">
         <div class="song-main">
-          <div class="song-title">${esc(s.title)}${isEdited(id)?' <span style="color:var(--gold);font-size:.7em" title="Editada">✎</span>':""}</div>
+          <div class="song-title">${esc(s.title)}${isEdited(id)?' <span style="color:var(--gold);font-size:.7em" title="Editada">✎</span>':""}${songVersions(id).length?` <span class="cat-tag" style="color:var(--indigo);background:var(--indigo)1a">${songVersions(id).length+1} versiones</span>`:""}</div>
           <div class="song-sub">
             ${tagChipsHTML(s)}
             <span>${esc(collLabel(collOf(s)))}</span>
@@ -870,6 +972,14 @@ function renderSong(){
   const mode=PREFS.chordMode||"above";
   const comments=COMMENTS[id]||[];
   const hasBad=PREFS.showChords && songHasBadChord(s);
+  const baseId=baseSongId(id);
+  const versions=songVersions(baseId);
+  const versionSelHTML = versions.length ? (()=>{
+    const base=SONGS[baseId];
+    const opts=[`<option value="${baseId}"${id===baseId?" selected":""}>${esc(base.title)} (original)</option>`]
+      .concat(versions.map(vid=>`<option value="${vid}"${id===vid?" selected":""}>${esc(SONGS[vid].version_label||"Versión")}</option>`)).join("");
+    return `<select id="versionSel" class="coll-select" style="margin-top:8px">${opts}</select>`;
+  })() : "";
 
   let html=`<div class="song-view">
     <button class="sv-back" id="back"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg> Biblioteca</button>
@@ -880,7 +990,9 @@ function renderSong(){
         <span>${esc(collLabel(collOf(s)))}</span>
         ${capo>0?`<span class="capo-meta">Cejillo ${romano(capo)}</span>`:""}
         ${isEdited(id)?`<span class="editlock">✎ editada</span>`:""}
+        ${isVersion(id)?`<span class="editlock" style="color:var(--indigo);background:var(--indigo)1a">${esc(s.version_label||"Versión")}</span>`:""}
       </div>
+      ${versionSelHTML}
       ${s.credits?`<div class="sv-credits">✍ ${esc(s.credits)}</div>`:""}
     </div>
 
@@ -891,7 +1003,6 @@ function renderSong(){
         <button class="rib-circ" id="tUp" title="Subir medio tono">+</button>
       </div>
       <button class="rib-btn ghost" id="tReset" title="Volver al tono original">↺</button>
-      <button class="rib-btn" id="accBtn" title="Sostenidos / bemoles">${flat?"♭":"♯"}</button>
       ${capo>0?`<button class="rib-btn${noCapo?" active":""}" id="capoBtn" title="${noCapo?"Volver a digitación con cejillo":"Tocar sin cejillo (sube "+capo+" trastes)"}">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M7 7v10M11 7v10M15 7v10"/></svg>
         ${noCapo?"Sin cejillo":"Cejillo "+romano(capo)}
@@ -998,10 +1109,10 @@ function renderSong(){
   // eventos
   const upd=()=>{ TRANS[id]=((TRANS[id]||0)); savePersonalState(); render(); };
   $main.querySelector("#back").onclick=closeSong;
+  const vsel=$main.querySelector("#versionSel"); if(vsel)vsel.onchange=()=>openSong(parseId(vsel.value));
   $main.querySelector("#tDown").onclick=()=>{TRANS[id]=(shift-1);if(TRANS[id]===0)delete TRANS[id];savePersonalState();render()};
   $main.querySelector("#tUp").onclick=()=>{TRANS[id]=(shift+1);if(TRANS[id]===0)delete TRANS[id];savePersonalState();render()};
   $main.querySelector("#tReset").onclick=()=>{delete TRANS[id];savePersonalState();render()};
-  $main.querySelector("#accBtn").onclick=()=>{PREFS.preferFlat=!PREFS.preferFlat;savePersonalState();render()};
   $main.querySelector("#chordsBtn").onclick=()=>{PREFS.showChords=!PREFS.showChords;savePersonalState();render()};
   $main.querySelector("#modeBtn").onclick=()=>{PREFS.chordMode=(PREFS.chordMode||"above")==="side"?"above":"side";savePersonalState();render()};
   const cb=$main.querySelector("#capoBtn"); if(cb)cb.onclick=()=>{STATE.noCapo=!STATE.noCapo;render()};
@@ -1438,6 +1549,8 @@ function renderEditor(){
         <div class="ed-line-tools">
           <button class="txt-mini" data-secup="${si}" ${si===0?"disabled style=opacity:.3":""}>↑</button>
           <button class="txt-mini" data-secdown="${si}" ${si===d.sections.length-1?"disabled style=opacity:.3":""}>↓</button>
+          <button class="txt-mini" data-secdup="${si}" title="Duplicar estrofa completa">⧉ Duplicar</button>
+          <button class="txt-mini" data-seccopychords="${si}" title="Copiar acordes de otra estrofa">♪ Copiar acordes</button>
           <button class="txt-mini del" data-secdel="${si}">Eliminar estrofa</button>
         </div>
       </div>`;
@@ -1544,15 +1657,24 @@ function attachEditorEvents(id){
     if(d.credits&&d.credits.trim()) songObj.credits=d.credits.trim(); else songObj.credits=null;
 
     if(tgt==="new"){
-      const row=Object.assign({},songObj,{is_base:false,hidden:false,created_by:SESSION?.user.id||null});
-      const {data,error}=await db.from("songs").insert(row).select().single();
-      if(error){toast("Error al guardar: "+error.message);return;}
-      SONGS[data.id]=data;
-      STATE.editing=false; STATE.editTarget="song"; STATE.view="song"; STATE.songId=data.id; STATE.noCapo=false;
-      toast("Canción agregada"); render(); return;
+      const dup=findDuplicateCandidate(songObj.title, songObj.sections);
+      if(dup){
+        openDuplicateModal(dup.id,(action,label,parentId)=>{
+          if(action==='same'){ toast('No se subió: ya existe en el catálogo.'); return; }
+          finalizeNewSong(songObj, action==='version'?parentId:null, label);
+        });
+        return;
+      }
+      finalizeNewSong(songObj, null, null);
+      return;
     }
     if(tgt==="staged"){
-      STATE.staged[STATE.editStagedIdx]=songObj;
+      const prev=STATE.staged[STATE.editStagedIdx]||{};
+      STATE.staged[STATE.editStagedIdx]=Object.assign({},songObj,{
+        _dup:prev._dup, _dupAction:prev._dupAction, _dupLabel:prev._dupLabel,
+        parent_song_id:prev.parent_song_id, version_label:prev.version_label
+      });
+      if(STATE.reviewMode==="admin") STATE.reviewEdited=true;
       STATE.editing=false; STATE.view="review";
       toast("Cambios guardados"); render(); return;
     }
@@ -1563,10 +1685,15 @@ function attachEditorEvents(id){
       if(error){toast("Error al guardar: "+error.message);return;}
       SONGS[id]=Object.assign({},SONGS[id],songObj);
       if(STATE.editTarget==="pending_approve"&&STATE.editPendingId){
-        await db.from("pending_edits").update({status:"approved",reviewed_at:new Date().toISOString()}).eq("id",STATE.editPendingId);
+        const pe=PENDING_EDITS.find(p=>String(p.id)===String(STATE.editPendingId));
+        await db.from("pending_edits").update({status:"approved",reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",STATE.editPendingId);
+        if(pe)createNotification(pe.submitted_by,'edit_approved','pending_edits',pe.id,`Tu sugerencia para "${songObj.title}" fue aprobada (con algunos ajustes del administrador).`);
+        logSongHistory(id,'edited',{title:songObj.title,via:'pending_approve_edited'});
         PENDING_EDITS=PENDING_EDITS.filter(p=>p.id!==STATE.editPendingId);
         PENDING_COUNT=PENDING_EDITS.length;
         STATE.editPendingId=null;
+      } else {
+        logSongHistory(id,'edited',{title:songObj.title});
       }
       STATE.editing=false; STATE.editTarget="song"; toast("Correcciones guardadas"); render();
     } else {
@@ -1634,8 +1761,55 @@ function attachEditorEvents(id){
   const mv=(arr,from,to)=>{const x=arr.splice(from,1)[0];arr.splice(to,0,x)};
   document.querySelectorAll("[data-secup]").forEach(b=>b.onclick=()=>{readEditorIntoDraft();const i=+b.dataset.secup;mv(STATE.editDraft.sections,i,i-1);render()});
   document.querySelectorAll("[data-secdown]").forEach(b=>b.onclick=()=>{readEditorIntoDraft();const i=+b.dataset.secdown;mv(STATE.editDraft.sections,i,i+1);render()});
+  document.querySelectorAll("[data-secdup]").forEach(b=>b.onclick=()=>{
+    readEditorIntoDraft();
+    const i=+b.dataset.secdup;
+    const clone=JSON.parse(JSON.stringify(STATE.editDraft.sections[i]));
+    STATE.editDraft.sections.splice(i+1,0,clone);
+    render();
+  });
+  document.querySelectorAll("[data-seccopychords]").forEach(b=>b.onclick=()=>{
+    readEditorIntoDraft();
+    openChordCopyPicker(+b.dataset.seccopychords);
+  });
   document.querySelectorAll("[data-lineup]").forEach(b=>b.onclick=()=>{readEditorIntoDraft();const[si,li]=b.dataset.lineup.split("-").map(Number);mv(STATE.editDraft.sections[si],li,li-1);render()});
   document.querySelectorAll("[data-linedown]").forEach(b=>b.onclick=()=>{readEditorIntoDraft();const[si,li]=b.dataset.linedown.split("-").map(Number);mv(STATE.editDraft.sections[si],li,li+1);render()});
+}
+
+// ---- Copiar acordes de otra estrofa (línea por línea, según índice) ----
+function openChordCopyPicker(targetIdx){
+  const secs=STATE.editDraft.sections;
+  const options=secs.map((sec,i)=>{
+    if(i===targetIdx)return "";
+    const preview=((sec.find(l=>l.lyric)||sec[0]||{}).lyric)||"(sin letra)";
+    return `<button class="btn sm" data-srcsec="${i}" style="width:100%;justify-content:flex-start;margin-bottom:6px">Estrofa ${i+1}: ${esc(preview.slice(0,40))}</button>`;
+  }).join("");
+  if(!options.trim()){ toast("No hay otras estrofas para copiar"); return; }
+  openModal(`<div class="modal-head"><h3>Copiar acordes de…</h3>${closeBtn()}</div>
+    <div class="modal-body">
+      <div class="hint" style="margin-bottom:10px">Se aplican los acordes línea por línea a la Estrofa ${targetIdx+1}. Si las estrofas tienen distinto largo, las líneas sin pareja quedan sin acorde.</div>
+      ${options}
+    </div>`);
+  document.querySelectorAll("[data-srcsec]").forEach(b=>b.onclick=()=>{
+    const srcIdx=+b.dataset.srcsec;
+    closeModal();
+    applyChordsFromSection(srcIdx, targetIdx);
+    render();
+  });
+}
+function applyChordsFromSection(srcIdx, targetIdx){
+  const secs=STATE.editDraft.sections;
+  const src=secs[srcIdx], tgt=secs[targetIdx];
+  let unmatched=0;
+  for(let i=0;i<tgt.length;i++){
+    if(i<src.length){ tgt[i].chords=src[i].chords||""; }
+    else { tgt[i].chords=""; unmatched++; }
+  }
+  if(src.length!==tgt.length){
+    toast(`Acordes copiados${unmatched>0?` (${unmatched} línea(s) quedaron sin acorde por diferencia de tamaño)`:""}.`);
+  } else {
+    toast("Acordes copiados");
+  }
 }
 
 async function deleteSong(id){
@@ -1690,7 +1864,7 @@ function openSettings(){
     <div class="field" style="border-top:1px solid var(--line);padding-top:16px">
       <label>Administrador</label>
       <div class="hint" style="margin-top:0;margin-bottom:10px">Opciones reservadas (solo admin).</div>
-      <button class="btn sm" id="adminBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg> Ajustes de admin${PENDING_COUNT>0?`<span class="pending-badge">${PENDING_COUNT}</span>`:""}</button>
+      <button class="btn sm" id="adminBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg> Ajustes de admin${(PENDING_COUNT+PENDING_IMPORT_COUNT)>0?`<span class="pending-badge">${PENDING_COUNT+PENDING_IMPORT_COUNT}</span>`:""}</button>
     </div>
     <div class="field" style="border-top:1px solid var(--line);padding-top:16px">
       <div class="hint">${nSongs} canciones · ${LISTS.length} listas · ${FAVS.length} favoritos${isAdmin()?" · 🛡 Admin":""}</div>
@@ -1754,6 +1928,13 @@ function adminPanel(){
       <button class="btn sm" id="seePendingBtn">Ver pendientes</button>
     </div>` : "";
 
+  const pendImpSection = PENDING_IMPORT_COUNT>0 ? `
+    <div class="field" style="border-top:1px solid var(--line);padding-top:16px">
+      <label>Canciones nuevas e importaciones <span class="pending-badge">${PENDING_IMPORT_COUNT}</span></label>
+      <div class="hint" style="margin-top:0;margin-bottom:10px">Canciones agregadas a mano o cancioneros importados, esperando tu aprobación.</div>
+      <button class="btn sm" id="seePendingImpBtn">Ver pendientes</button>
+    </div>` : "";
+
   const html=`<div class="modal-head"><h3>Ajustes de admin</h3>${closeBtn()}</div>
   <div class="modal-body">
     <div class="field"><label>Colecciones</label>
@@ -1764,6 +1945,7 @@ function adminPanel(){
     </div>
     <button class="btn primary" id="saveColls" style="width:100%;justify-content:center;margin-top:14px">Guardar colecciones</button>
     ${pendSection}
+    ${pendImpSection}
   </div>`;
   openModal(html);
 
@@ -1815,6 +1997,8 @@ function adminPanel(){
 
   const spBtn=document.getElementById("seePendingBtn");
   if(spBtn)spBtn.onclick=()=>{closeModal();openPendingEditsPanel();};
+  const spiBtn=document.getElementById("seePendingImpBtn");
+  if(spiBtn)spiBtn.onclick=()=>{closeModal();openPendingImportsPanel();};
 }
 
 function openNewCollectionModal(orderedKeys, reRenderRows){
@@ -1840,7 +2024,7 @@ function openNewCollectionModal(orderedKeys, reRenderRows){
 }
 
 function openAssignSongsModal(collKey, collName){
-  const allSongs=Object.values(SONGS).sort((a,b)=>a.title.localeCompare(b.title,"es"));
+  const allSongs=Object.values(SONGS).filter(s=>!s.parent_song_id).sort((a,b)=>a.title.localeCompare(b.title,"es"));
   const selected=new Set();
   let searchQ="";
 
@@ -2057,7 +2241,7 @@ async function handleImportFile(ev){
     try{ data=JSON.parse(r.result); }catch(e){ toast("El archivo no es JSON válido"); return; }
     const songs = Array.isArray(data)?data : (data&&Array.isArray(data.songs)?data.songs:null);
     if(!songs){ toast("No se encontró una lista de canciones"); return; }
-    // crear/asignar colección a partir del nombre escrito
+    // clave tentativa de colección — se crea recién cuando el admin aprueba
     let collKey="general";
     if(collName){ collKey=newCollKey(); }
     const staged=[];
@@ -2106,26 +2290,56 @@ async function handleImportFile(ev){
       staged.push(obj);
     }
     if(!staged.length){ toast("No se pudo leer ninguna canción"); return; }
-    if(collName){
-      await db.from("collections").upsert({id:collKey,label:collName,created_by:SESSION?.user.id||null});
-      COLLECTIONS[collKey]=collName;
-    }
-    STATE.staged=staged; STATE.view="review"; closeModal(); window.scrollTo(0,0); render();
+    // detección de duplicados contra el catálogo ya publicado
+    staged.forEach(obj=>{
+      const dup=findDuplicateCandidate(obj.title, obj.sections);
+      obj._dup = dup ? {id:dup.id, title:SONGS[dup.id]?.title||""} : null;
+      obj._dupAction = null; obj._dupLabel = "";
+    });
+    STATE.staged=staged; STATE.reviewMode="submit"; STATE.reviewEdited=false;
+    STATE.importCollName=collName||null; STATE.importCollKey=collKey;
+    STATE.view="review"; closeModal(); window.scrollTo(0,0); render();
   };
   r.readAsText(f);
 }
 
+
+function cleanSections(sections){
+  return (sections||[]).map(sec=>sec.map(ln=>{const o={lyric:ln.lyric||""};if(ln.chords&&ln.chords.trim())o.chords=ln.chords.trim();return o})).filter(sec=>sec.length);
+}
+function buildPayloadSong(s){
+  const clean=cleanSections(s.sections);
+  const obj={title:(s.title||"").trim(),categorias:(s.categorias||[]),coleccion:s.coleccion||"general",sections:clean.length?clean:[[{lyric:""}]]};
+  if(s.liturgica===true||s.liturgica===false)obj.liturgica=s.liturgica;
+  obj.capo=+s.capo>0?+s.capo:0;
+  if(s.credits&&s.credits.trim())obj.credits=s.credits.trim();
+  if(s.parent_song_id){ obj.parent_song_id=s.parent_song_id; obj.version_label=s.version_label||""; }
+  return obj;
+}
+
 function renderReview(){
   const st=STATE.staged||[];
+  const admin=STATE.reviewMode==="admin";
+  const what=STATE.reviewKind==='manual'?'canción':'cancionero';
+  const heading = admin ? (STATE.reviewKind==='manual'?"Revisar canción nueva":"Revisar importación") : "Previsualización";
+  const subtitle = admin
+    ? `Enviado por <b>${esc(STATE.reviewSubmitterName||"Usuario")}</b> · ${st.length} canción(es). Puedes editar o quitar antes de aprobar.`
+    : `${st.length} canción(es) por revisar. Corrige lo que necesites y luego envía a revisión.`;
   let html=`<div class="song-view">
-    <button class="sv-back" id="revBack"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg> Cancelar importación</button>
-    <div class="sv-head"><h1 class="sv-title">Previsualización</h1>
-      <div class="sv-meta">${st.length} canción(es) por revisar. Corrige lo que necesites y luego publica.</div></div>
+    <button class="sv-back" id="revBack"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg> ${admin?"Volver":"Cancelar importación"}</button>
+    <div class="sv-head"><h1 class="sv-title">${heading}</h1>
+      <div class="sv-meta">${subtitle}</div></div>
     <div class="rev-list">`;
   if(!st.length){
-    html+=`<div class="empty"><div class="big">No quedan canciones</div><div>Vuelve a importar para intentar de nuevo.</div></div>`;
+    html+=`<div class="empty"><div class="big">No quedan canciones</div><div>${admin?"Todas fueron quitadas.":"Vuelve a importar para intentar de nuevo."}</div></div>`;
   }
   st.forEach((s,i)=>{
+    const dupBanner = (!admin && s._dup && !s._dupAction)
+      ? `<div class="dup-banner">⚠ Posible canción repetida: <b>${esc(s._dup.title)}</b>. <button class="txt-mini" data-dupreview="${i}" style="color:var(--indigo);text-decoration:underline">Revisar</button></div>` : "";
+    const resolvedChip = (!admin && s._dupAction)
+      ? `<span class="cat-tag" style="color:var(--indigo);background:var(--indigo)1a">${s._dupAction==='version'?'Versión de: '+esc(s._dup?.title||""):'Canción distinta (confirmado)'}</span>` : "";
+    const versionChip = s.parent_song_id
+      ? `<span class="cat-tag" style="color:var(--indigo);background:var(--indigo)1a">Versión de: ${esc(SONGS[s.parent_song_id]?.title||"")}${s.version_label?" — "+esc(s.version_label):""}</span>` : "";
     html+=`<div class="rev-card">
       <div class="rev-top">
         <div class="rev-main">
@@ -2133,9 +2347,11 @@ function renderReview(){
           <div class="song-sub">
             ${tagChipsHTML(s)}
             <span>${esc(collLabel(collOf(s)))}</span>${s.capo?` · Cejillo ${romano(+s.capo)}`:""}
+            ${resolvedChip}${versionChip}
           </div>
           ${s.credits?`<div class="sv-credits">✍ ${esc(s.credits)}</div>`:""}
           ${songHasBadChord(s)?`<div class="bad-note" style="margin:8px 0 0">⚠ Tiene acordes no reconocidos (en rojo). Edita para corregirlos.</div>`:""}
+          ${dupBanner}
         </div>
         <div class="ed-line-tools">
           <button class="btn sm" data-edit="${i}">Editar</button>
@@ -2156,37 +2372,167 @@ function renderReview(){
   });
   html+=`</div>`;
   if(st.length){
-    html+=`<div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:8px">
-      <button class="btn primary" id="publishBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5L20 7"/></svg> Publicar ${st.length} canción(es)</button>
-      <button class="btn danger" id="discardBtn">Descartar todo</button>
-    </div>`;
+    html += admin
+      ? `<div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:8px">
+          <button class="btn primary" id="approveBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5L20 7"/></svg> Aprobar ${st.length} canción(es)</button>
+          <button class="btn danger" id="rejectBtn">✕ Rechazar con nota</button>
+        </div>`
+      : `<div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px;margin-top:8px">
+          <button class="btn primary" id="publishBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l5 5L20 7"/></svg> Enviar a revisión (${st.length})</button>
+          <button class="btn danger" id="discardBtn">Descartar todo</button>
+        </div>`;
   }
   html+=`</div>`;
   $main.innerHTML=html;
   document.getElementById("scrollFab").classList.remove("show");
 
-  document.getElementById("revBack").onclick=()=>{STATE.staged=null;STATE.view="list";render()};
-  const db=document.getElementById("discardBtn"); if(db)db.onclick=()=>{ if(confirm("¿Descartar todas las canciones importadas?")){STATE.staged=null;STATE.view="list";render()} };
-  const pb=document.getElementById("publishBtn"); if(pb)pb.onclick=publishStaged;
+  document.getElementById("revBack").onclick=()=>{
+    STATE.staged=null; STATE.reviewMode="submit"; STATE.reviewPendingId=null;
+    STATE.importCollName=null; STATE.importCollKey=null;
+    STATE.view="list"; render();
+  };
+  const dbn=document.getElementById("discardBtn"); if(dbn)dbn.onclick=()=>{ if(confirm("¿Descartar todas las canciones importadas?")){STATE.staged=null;STATE.importCollName=null;STATE.importCollKey=null;STATE.view="list";render()} };
+  const pb=document.getElementById("publishBtn"); if(pb)pb.onclick=submitImportForReview;
+  const ab=document.getElementById("approveBtn"); if(ab)ab.onclick=adminApproveImport;
+  const rb=document.getElementById("rejectBtn"); if(rb)rb.onclick=adminRejectImport;
   $main.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>startEditStaged(+b.dataset.edit));
-  $main.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ STATE.staged.splice(+b.dataset.rm,1); render(); });
+  $main.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{ if(admin)STATE.reviewEdited=true; STATE.staged.splice(+b.dataset.rm,1); render(); });
+  $main.querySelectorAll("[data-dupreview]").forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.dupreview, s=STATE.staged[idx];
+    if(!s._dup)return;
+    openDuplicateModal(s._dup.id,(action,label,parentId)=>{
+      if(action==='same'){ STATE.staged.splice(idx,1); toast('Quitada: ya existe en el catálogo.'); render(); return; }
+      s._dupAction=action;
+      if(action==='version'){ s.parent_song_id=parentId; s.version_label=label||""; }
+      render();
+    });
+  });
 }
-async function publishStaged(){
+
+// ---- Usuario: enviar lote (manual o import) a revisión del admin ----
+async function submitImportForReview(){
   const st=STATE.staged||[]; if(!st.length)return;
+  const unresolved=st.filter(s=>s._dup && !s._dupAction);
+  if(unresolved.length){ toast(`Resuelve ${unresolved.length} posible(s) duplicado(s) antes de enviar (⚠ en la tarjeta).`); return; }
+  const payload=st.map(buildPayloadSong);
+  const row={kind:'import', payload, collection_name:STATE.importCollName||null, collection_key:STATE.importCollKey||null,
+    submitted_by:SESSION.user.id, submitter_name:PROFILE?.display_name||SESSION.user.email?.split("@")[0]||null,
+    submitter_email:SESSION.user.email||null, status:'pending'};
+  const {error}=await db.from("pending_imports").insert(row);
+  if(error){
+    if(error.message&&(error.message.includes("pending_imports")||error.message.includes("schema cache")||error.message.includes("does not exist"))){
+      toast("⚠ El administrador aún no habilitó la revisión de importaciones.");
+    } else { toast("Error al enviar: "+error.message); }
+    return;
+  }
+  const n=payload.length;
+  STATE.staged=null; STATE.importCollName=null; STATE.importCollKey=null; STATE.view="list"; STATE.tab="library";
+  toast(`Cancionero enviado para revisión (${n} canción(es))`); render();
+}
+
+// ---- Admin: cargar un pending_imports en el flujo de revisión ----
+function loadImportForReview(row){
+  STATE.staged=JSON.parse(JSON.stringify(row.payload||[]));
+  STATE.reviewMode="admin";
+  STATE.reviewPendingId=row.id;
+  STATE.reviewKind=row.kind;
+  STATE.reviewSubmittedBy=row.submitted_by;
+  STATE.reviewSubmitterName=row.submitter_name||"Usuario";
+  STATE.reviewCollection={name:row.collection_name,key:row.collection_key};
+  STATE.reviewEdited=false;
+  STATE.view="review"; STATE.tab="library";
+}
+async function adminApproveImport(){
+  const st=STATE.staged||[]; if(!st.length){toast("No quedan canciones para aprobar");return;}
+  let collKey=(STATE.reviewCollection&&STATE.reviewCollection.key)||"general";
+  const collName=STATE.reviewCollection&&STATE.reviewCollection.name;
+  if(collName){
+    await db.from("collections").upsert({id:collKey,label:collName,created_by:STATE.reviewSubmittedBy||null});
+    COLLECTIONS[collKey]=collName;
+    if(!COLLECTIONS_ORDER.includes(collKey))COLLECTIONS_ORDER.push(collKey);
+  }
   const rows=st.map(s=>{
-    const clean=s.sections.map(sec=>sec.map(ln=>{const o={lyric:ln.lyric||""};if(ln.chords&&ln.chords.trim())o.chords=ln.chords.trim();return o})).filter(sec=>sec.length);
-    const row={title:s.title.trim(),categorias:(s.categorias||[]),coleccion:s.coleccion||"general",sections:clean.length?clean:[[{lyric:""}]],is_base:false,hidden:false,created_by:SESSION?.user.id||null};
-    if(s.liturgica===true||s.liturgica===false)row.liturgica=s.liturgica;
-    row.capo=+s.capo>0?+s.capo:0;
-    if(s.credits&&s.credits.trim())row.credits=s.credits.trim();
-    return row;
+    const obj=buildPayloadSong(s);
+    return Object.assign({},obj,{coleccion:obj.coleccion||collKey||"general",is_base:false,hidden:false,created_by:STATE.reviewSubmittedBy||null});
   });
   const {data,error}=await db.from("songs").insert(rows).select();
-  if(error){toast("Error al publicar: "+error.message);return;}
+  if(error){toast("Error al aprobar: "+error.message);return;}
   (data||[]).forEach(s=>{ SONGS[s.id]=s; });
-  const n=rows.length; STATE.staged=null; STATE.view="list"; STATE.tab="library";
-  toast(n+" canción(es) publicada(s)"); render();
+  (data||[]).forEach(s=>logSongHistory(s.id, s.parent_song_id?'version_added':'import_approved', {title:s.title, from_import:STATE.reviewPendingId}));
+  const newStatus=STATE.reviewEdited?"approved_with_changes":"approved";
+  await db.from("pending_imports").update({status:newStatus,reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",STATE.reviewPendingId);
+  const what=STATE.reviewKind==='manual'?'canción':'importación';
+  createNotification(STATE.reviewSubmittedBy,'import_approved','pending_imports',STATE.reviewPendingId,
+    `Tu ${what} "${collName||(rows[0]&&rows[0].title)||''}" fue aprobada (${rows.length} canción(es)).`);
+  PENDING_IMPORTS=PENDING_IMPORTS.filter(p=>String(p.id)!==String(STATE.reviewPendingId));
+  PENDING_IMPORT_COUNT=PENDING_IMPORTS.length;
+  STATE.staged=null; STATE.reviewMode="submit"; STATE.reviewPendingId=null; STATE.view="list"; STATE.tab="library";
+  toast(`${rows.length} canción(es) publicada(s)`); render();
 }
+async function adminRejectImport(){
+  const note=(window.prompt("Motivo del rechazo (lo verá quien hizo el envío):")||"").trim();
+  const {error}=await db.from("pending_imports").update({status:'rejected',review_note:note||null,reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",STATE.reviewPendingId);
+  if(error){toast("Error al rechazar: "+error.message);return;}
+  const what=STATE.reviewKind==='manual'?'canción':'importación';
+  createNotification(STATE.reviewSubmittedBy,'import_rejected','pending_imports',STATE.reviewPendingId,
+    `Tu ${what} "${(STATE.reviewCollection&&STATE.reviewCollection.name)||''}" fue rechazada.${note?(' Motivo: '+note):''}`);
+  PENDING_IMPORTS=PENDING_IMPORTS.filter(p=>String(p.id)!==String(STATE.reviewPendingId));
+  PENDING_IMPORT_COUNT=PENDING_IMPORTS.length;
+  STATE.staged=null; STATE.reviewMode="submit"; STATE.reviewPendingId=null; STATE.view="list"; STATE.tab="library";
+  toast("Envío rechazado"); render();
+}
+
+// ---- Admin: panel con la lista de canciones nuevas / importaciones pendientes ----
+function openPendingImportsPanel(){
+  if(!isAdmin())return;
+  if(!PENDING_IMPORTS.length){
+    openModal(`<div class="modal-head"><h3>Canciones nuevas e importaciones</h3>${closeBtn()}</div>
+    <div class="modal-body"><div class="empty" style="padding:40px 0"><div class="big">Sin pendientes</div><div>No hay canciones nuevas ni cancioneros esperando revisión.</div></div></div>`);
+    return;
+  }
+  let html=`<div class="modal-head"><h3>Canciones nuevas e importaciones <span class="pending-badge">${PENDING_IMPORTS.length}</span></h3>${closeBtn()}</div><div class="modal-body">`;
+  PENDING_IMPORTS.forEach(p=>{
+    const n=(p.payload||[]).length;
+    const title=p.kind==='manual'?((p.payload&&p.payload[0]&&p.payload[0].title)||"Canción nueva"):(p.collection_name||"Cancionero sin nombre");
+    const date=p.created_at?new Date(p.created_at).toLocaleDateString("es-CL"):"";
+    const by=p.submitter_name||"Usuario";
+    html+=`<div class="pending-rev-card">
+      <div class="pending-rev-title">${p.kind==='manual'?'🎵 ':'📚 '}${esc(title)}${p.kind==='import'?` <span style="font-weight:400;color:var(--faint)">(${n} canción${n!==1?'es':''})</span>`:""}</div>
+      <div class="pending-rev-meta">Enviado por <b>${esc(by)}</b> · ${date}</div>
+      <div class="pending-rev-actions">
+        <button class="btn sm" data-review="${esc(p.id)}">Revisar</button>
+        <button class="btn sm primary" data-quickapprove="${esc(p.id)}">✓ Aprobar tal cual</button>
+        <button class="btn sm danger" data-quickreject="${esc(p.id)}">✕ Rechazar</button>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  openModal(html);
+
+  document.querySelectorAll("[data-review]").forEach(b=>b.onclick=()=>{
+    const row=PENDING_IMPORTS.find(p=>String(p.id)===String(b.dataset.review));
+    if(!row)return;
+    closeModal(); loadImportForReview(row); window.scrollTo(0,0); render();
+  });
+  document.querySelectorAll("[data-quickapprove]").forEach(b=>b.onclick=async()=>{
+    const row=PENDING_IMPORTS.find(p=>String(p.id)===String(b.dataset.quickapprove));
+    if(!row)return;
+    if(!confirm(`¿Aprobar y publicar tal cual fue enviado (${(row.payload||[]).length} canción(es))?`))return;
+    loadImportForReview(row);
+    await adminApproveImport();
+    closeModal();
+    if(PENDING_IMPORTS.length)openPendingImportsPanel();
+  });
+  document.querySelectorAll("[data-quickreject]").forEach(b=>b.onclick=async()=>{
+    const row=PENDING_IMPORTS.find(p=>String(p.id)===String(b.dataset.quickreject));
+    if(!row)return;
+    loadImportForReview(row);
+    await adminRejectImport();
+    closeModal();
+    if(PENDING_IMPORTS.length)openPendingImportsPanel();
+  });
+}
+
 
 // =================================================================
 //  MODAL / TOAST / TEMA
@@ -2222,14 +2568,23 @@ function updateAuthBtn(){
   if(!btn)return;
   if(SESSION){
     const name=PROFILE?.display_name||SESSION.user.email?.split("@")[0]||"Yo";
+    btn.innerHTML="";
     btn.textContent=name[0].toUpperCase();
     btn.title=SESSION.user.email+(isAdmin()?" · Admin":"");
     btn.style.background="var(--indigo)"; btn.style.color="var(--indigo-ink)";
   } else {
-    btn.textContent="→";
-    btn.title="Iniciar sesión";
-    btn.style.background=""; btn.style.color="";
+    btn.innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>`;
+    btn.title="Iniciar sesión / Registrarse";
+    btn.style.background="var(--gold)"; btn.style.color="#fff";
   }
+  updateNotifBtn();
+}
+function updateNotifBtn(){
+  const btn=document.getElementById("notifBtn"), badge=document.getElementById("notifBadge");
+  if(!btn||!badge)return;
+  btn.style.display=isLoggedIn()?"flex":"none";
+  if(UNREAD_COUNT>0){ badge.style.display="flex"; badge.textContent=UNREAD_COUNT>9?"9+":UNREAD_COUNT; }
+  else badge.style.display="none";
 }
 function openAuthModal(){
   if(SESSION){
@@ -2246,16 +2601,22 @@ function openAuthModal(){
     };
     return;
   }
-  const html=`<div class="modal-head"><h3>Iniciar sesión</h3>${closeBtn()}</div>
+  const html=`<div class="modal-head"><h3>Iniciar sesión o registrarte</h3>${closeBtn()}</div>
   <div class="modal-body">
     <div class="hint" style="margin-bottom:14px">Con una cuenta puedes guardar listas, favoritos y repertorios, y contribuir con canciones, enlaces y comentarios.</div>
     <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="tu@correo.com" autocomplete="email"></div>
     <div class="field"><label>Contraseña</label><input id="authPw" type="password" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="btn primary" id="authGo" style="width:100%;justify-content:center">Entrar</button>
     <div class="hint" id="authErr" style="color:var(--danger);display:none;margin-top:8px"></div>
-    <div style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px">
-      <div class="hint" style="margin-bottom:8px">¿Primera vez? Crea tu cuenta:</div>
-      <button class="btn" id="authReg" style="width:100%;justify-content:center">Registrarse</button>
+    <div style="border-top:1px solid var(--line);margin-top:18px;padding-top:14px">
+      <div class="hint" style="margin-bottom:10px"><b>¿Primera vez aquí? Así te registras:</b></div>
+      <ol class="hint" style="margin:0 0 12px;padding-left:18px;line-height:1.6">
+        <li>Escribe tu correo y crea una contraseña arriba (mínimo 6 caracteres).</li>
+        <li>Presiona <b>“Crear cuenta”</b> abajo.</li>
+        <li>Te llegará un correo de confirmación: ábrelo y confirma tu cuenta.</li>
+        <li>Vuelve aquí e inicia sesión con el mismo correo y contraseña.</li>
+      </ol>
+      <button class="btn" id="authReg" style="width:100%;justify-content:center">Crear cuenta</button>
     </div>
   </div>`;
   openModal(html);
@@ -2270,12 +2631,55 @@ function openAuthModal(){
     const fn = mode==="signup" ? db.auth.signUp({email,password:pw}) : db.auth.signInWithPassword({email,password:pw});
     const {error}=await fn;
     if(error){ errEl.textContent=error.message; errEl.style.display="block"; document.getElementById("authGo").disabled=false; return; }
-    if(mode==="signup") toast("Cuenta creada. Revisa tu email para confirmarla.");
+    if(mode==="signup") toast("Cuenta creada. Revisa tu correo para confirmarla antes de iniciar sesión.");
     closeModal();
   };
   document.getElementById("authGo").onclick=()=>tryAuth("login");
   document.getElementById("authReg").onclick=()=>tryAuth("signup");
   pwEl.onkeydown=e=>{ if(e.key==="Enter")tryAuth("login"); };
+}
+
+// ---- Notificaciones ----
+function notifIcon(type){
+  if(type==="edit_approved"||type==="import_approved") return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2.4"><path d="M5 12l5 5L20 7"/></svg>`;
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+}
+function openNotificationsPanel(){
+  if(!isLoggedIn())return;
+  let html=`<div class="modal-head"><h3>Notificaciones</h3>${closeBtn()}</div><div class="modal-body">`;
+  if(!NOTIFICATIONS.length){
+    html+=`<div class="empty" style="padding:40px 0"><div class="big">Sin notificaciones</div><div>Te avisaremos aquí cuando se revisen tus sugerencias.</div></div>`;
+  } else {
+    if(UNREAD_COUNT>0) html+=`<button class="btn sm" id="markAllRead" style="margin-bottom:12px">Marcar todas como leídas</button>`;
+    NOTIFICATIONS.forEach(n=>{
+      const date=n.created_at?new Date(n.created_at).toLocaleDateString("es-CL",{day:"numeric",month:"short"}):"";
+      html+=`<div class="notif-item${n.read?"":" unread"}" data-notif="${esc(n.id)}">
+        <div class="notif-ico">${notifIcon(n.type)}</div>
+        <div style="flex:1;min-width:0">
+          <div class="notif-msg">${esc(n.message)}</div>
+          <div class="notif-date">${date}</div>
+        </div>
+      </div>`;
+    });
+  }
+  html+=`</div>`;
+  openModal(html);
+  const mar=document.getElementById("markAllRead");
+  if(mar)mar.onclick=async()=>{
+    const unread=NOTIFICATIONS.filter(n=>!n.read).map(n=>n.id);
+    NOTIFICATIONS.forEach(n=>n.read=true); UNREAD_COUNT=0; updateNotifBtn();
+    closeModal();
+    if(unread.length) await db.from("notifications").update({read:true}).in("id",unread);
+  };
+  document.querySelectorAll("[data-notif]").forEach(row=>row.onclick=async()=>{
+    const nid=row.dataset.notif;
+    const n=NOTIFICATIONS.find(x=>String(x.id)===String(nid));
+    if(n&&!n.read){
+      n.read=true; row.classList.remove("unread");
+      UNREAD_COUNT=Math.max(0,UNREAD_COUNT-1); updateNotifBtn();
+      await db.from("notifications").update({read:true}).eq("id",nid);
+    }
+  });
 }
 
 // =================================================================
@@ -2329,7 +2733,7 @@ async function loadProfile(){
   const {data}=await db.from("profiles").select("*").eq("id",SESSION.user.id).maybeSingle();
   PROFILE=data;
   if(isAdmin()) STATE.editUnlocked=true;
-  await loadPendingEdits();
+  await Promise.all([loadPendingEdits(), loadPendingImports(), loadNotifications()]);
 }
 
 // =================================================================
@@ -2346,6 +2750,7 @@ document.getElementById("searchClear").onclick=()=>{
   document.getElementById("searchClear").classList.remove("show");render();
 };
 document.getElementById("tabs").querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  if(t.dataset.tab==="lists" && !isLoggedIn()){ openAuthModal(); return; }
   STATE.tab=t.dataset.tab; STATE.activeList=null; STATE.view="list";
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
   render();
@@ -2362,6 +2767,7 @@ document.getElementById("themeBtn").onclick=()=>{
   PREFS.theme = cur==="dark"?"light":"dark"; savePersonalState(); applyTheme();
 };
 document.getElementById("authBtn").onclick=openAuthModal;
+document.getElementById("notifBtn").onclick=openNotificationsPanel;
 document.getElementById("feedbackBtn").onclick=()=>{
   const subj='Feedback Cancionero Misión País';
   const body='(Describe tu sugerencia o error aquí)\n\nVersión: v2\nURL: '+window.location.href;
@@ -2482,6 +2888,41 @@ async function loadPendingEdits(){
   } catch(e){ /* silenciar si la tabla no existe */ }
 }
 
+// Carga canciones nuevas / cancioneros pendientes (admin: todos; usuario: los propios)
+async function loadPendingImports(){
+  if(!SESSION)return;
+  try {
+    if(isAdmin()){
+      const {data,error}=await db.from("pending_imports").select("*").eq("status","pending").order("created_at",{ascending:false});
+      if(error){ PENDING_IMPORTS=[]; PENDING_IMPORT_COUNT=0; return; }
+      PENDING_IMPORTS=data||[];
+      PENDING_IMPORT_COUNT=PENDING_IMPORTS.length;
+    } else {
+      const {data,error}=await db.from("pending_imports").select("id,kind,status,collection_name,created_at").eq("submitted_by",SESSION.user.id).eq("status","pending");
+      if(error){ MY_PENDING_IMPORTS=[]; return; }
+      MY_PENDING_IMPORTS=data||[];
+    }
+  } catch(e){ /* silenciar si la tabla no existe */ }
+}
+
+// Carga notificaciones propias
+async function loadNotifications(){
+  if(!SESSION)return;
+  try{
+    const {data,error}=await db.from("notifications").select("*").eq("user_id",SESSION.user.id).order("created_at",{ascending:false}).limit(50);
+    if(error){ NOTIFICATIONS=[]; UNREAD_COUNT=0; return; }
+    NOTIFICATIONS=data||[];
+    UNREAD_COUNT=NOTIFICATIONS.filter(n=>!n.read).length;
+  }catch(e){ /* silenciar si la tabla no existe */ }
+}
+function createNotification(userId,type,relatedTable,relatedId,message){
+  if(!userId)return;
+  db.from("notifications").insert({user_id:userId,type,related_table:relatedTable,related_id:String(relatedId),message,read:false}).catch(()=>{});
+}
+function logSongHistory(songId,changeType,diff){
+  db.from("song_history").insert({song_id:songId,changed_by:SESSION?.user?.id||null,change_type:changeType,diff:diff||{}}).catch(()=>{});
+}
+
 // ---- Diff entre canción original y una sugerencia (edit_data) ----
 function flattenSongSections(secs){
   const out=[];
@@ -2542,6 +2983,63 @@ function openOriginalSongModal(s){
   openModal(html);
 }
 
+// ---- Modal de resolución de posible duplicado ----
+// onResolve(action, label, parentId) con action en 'version' | 'distinct' | 'same'
+function openDuplicateModal(candidateId, onResolve){
+  const s=SONGS[candidateId]; if(!s){ onResolve('distinct'); return; }
+  const html=`<div class="modal-head"><h3>¿Es la misma canción?</h3>${closeBtn()}</div>
+  <div class="modal-body">
+    <div class="hint" style="margin-bottom:14px">Encontramos una canción parecida en el catálogo: <b>${esc(s.title)}</b>.</div>
+    <button class="btn sm" id="dupSeeOrig" style="margin-bottom:16px">Ver "${esc(s.title)}"</button>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn" id="dupVersion" style="justify-content:flex-start">Es otra versión de "${esc(s.title)}"</button>
+      <button class="btn" id="dupDistinct" style="justify-content:flex-start">Es una canción distinta</button>
+      <button class="btn danger" id="dupSame" style="justify-content:flex-start">Es la misma canción — no subir</button>
+    </div>
+  </div>`;
+  openModal(html);
+  document.getElementById("dupSeeOrig").onclick=()=>openOriginalSongModal(s);
+  document.getElementById("dupVersion").onclick=()=>{
+    const label=(window.prompt('Nombre de la versión (opcional, ej. "Acústica"):')||"").trim();
+    closeModal(); onResolve('version', label, candidateId);
+  };
+  document.getElementById("dupDistinct").onclick=()=>{ closeModal(); onResolve('distinct'); };
+  document.getElementById("dupSame").onclick=()=>{ closeModal(); onResolve('same'); };
+}
+
+// Crea (o envía a revisión) una canción nueva, resolviendo parentId/versionLabel
+// si el usuario indicó que es una versión de una canción existente.
+async function finalizeNewSong(songObj, parentId, versionLabel){
+  const obj=Object.assign({},songObj);
+  if(parentId){
+    const siblings=songVersions(parentId).length;
+    obj.parent_song_id=parentId;
+    obj.version_label=(versionLabel&&versionLabel.trim())?versionLabel.trim():("Versión "+(siblings+2));
+  }
+  if(isAdmin()){
+    const row=Object.assign({},obj,{is_base:false,hidden:false,created_by:SESSION?.user.id||null});
+    const {data,error}=await db.from("songs").insert(row).select().single();
+    if(error){toast("Error al guardar: "+error.message);return;}
+    SONGS[data.id]=data;
+    logSongHistory(data.id, parentId?'version_added':'created', {title:data.title});
+    STATE.editing=false; STATE.editTarget="song"; STATE.view="song"; STATE.songId=data.id; STATE.noCapo=false;
+    toast(parentId?"Versión agregada":"Canción agregada"); render();
+  } else {
+    const row={kind:'manual', payload:[obj], collection_name:null, collection_key:null,
+      submitted_by:SESSION.user.id, submitter_name:PROFILE?.display_name||SESSION.user.email?.split("@")[0]||null,
+      submitter_email:SESSION.user.email||null, status:'pending'};
+    const {error}=await db.from("pending_imports").insert(row);
+    if(error){
+      if(error.message&&(error.message.includes("pending_imports")||error.message.includes("schema cache")||error.message.includes("does not exist"))){
+        toast("⚠ El administrador aún no habilitó la revisión de canciones nuevas. Usa 'Reportar' para enviarla por email.");
+      } else { toast("Error al enviar: "+error.message); }
+      return;
+    }
+    STATE.editing=false; STATE.view="list"; STATE.tab="library";
+    toast("Tu canción quedó pendiente de revisión por el administrador."); render();
+  }
+}
+
 // Panel de revisión de pendientes (solo admin)
 function openPendingEditsPanel(){
   if(!isAdmin())return;
@@ -2586,8 +3084,10 @@ function openPendingEditsPanel(){
     const {error}=await db.from("songs").update({...songObj,updated_at:new Date().toISOString()}).eq("id",sid);
     if(error){toast("Error: "+error.message);return;}
     SONGS[sid]=Object.assign({},SONGS[sid],songObj);
-    const {error:e2}=await db.from("pending_edits").update({status:"approved",reviewed_at:new Date().toISOString()}).eq("id",pid);
+    const {error:e2}=await db.from("pending_edits").update({status:"approved",reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",pid);
     if(e2){toast("Aprobado, pero no se pudo marcar como revisado: "+e2.message);}
+    logSongHistory(sid,'edited',{title:songObj.title});
+    createNotification(pe.submitted_by,'edit_approved','pending_edits',pe.id,`Tu sugerencia para "${SONGS[sid]?.title||songObj.title}" fue aprobada.`);
     PENDING_EDITS=PENDING_EDITS.filter(p=>String(p.id)!==String(pid));
     PENDING_COUNT=PENDING_EDITS.length;
     toast("Edición aprobada");
@@ -2621,9 +3121,11 @@ function openPendingEditsPanel(){
 
   document.querySelectorAll("[data-reject]").forEach(b=>b.onclick=async()=>{
     const pid=b.dataset.reject;
-    prompt("Motivo del rechazo (opcional):")?.trim()||null; // mostrar diálogo pero no guardar
-    const {error}=await db.from("pending_edits").update({status:"rejected",reviewed_at:new Date().toISOString()}).eq("id",pid);
+    const pe=PENDING_EDITS.find(p=>String(p.id)===String(pid));
+    const note=(window.prompt("Motivo del rechazo (se mostrará a quien sugirió el cambio):")||"").trim();
+    const {error}=await db.from("pending_edits").update({status:"rejected",review_note:note||null,reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",pid);
     if(error){toast("Error al rechazar: "+error.message);return;}
+    if(pe)createNotification(pe.submitted_by,'edit_rejected','pending_edits',pe.id,`Tu sugerencia para "${SONGS[pe.song_id]?.title||"una canción"}" fue rechazada.${note?(' Motivo: '+note):''}`);
     PENDING_EDITS=PENDING_EDITS.filter(p=>String(p.id)!==String(pid));
     PENDING_COUNT=PENDING_EDITS.length;
     toast("Edición rechazada");
@@ -2667,7 +3169,7 @@ async function init(){
   db.auth.onAuthStateChange(async(_ev,session)=>{
     SESSION=session;
     if(SESSION){ await Promise.all([loadProfile(),loadPersonalState()]); }
-    else { PROFILE=null; LISTS=[]; FAVS=[]; TRANS={}; PREFS={theme:PREFS.theme,showChords:true,lyricSize:18,preferFlat:false,scrollSpeed:35,chordMode:"above"}; REP=freshRep(); STATE.editUnlocked=false; PENDING_EDITS=[]; PENDING_COUNT=0; MY_PENDING={}; }
+    else { PROFILE=null; LISTS=[]; FAVS=[]; TRANS={}; PREFS={theme:PREFS.theme,showChords:true,lyricSize:18,preferFlat:false,scrollSpeed:35,chordMode:"above"}; REP=freshRep(); STATE.editUnlocked=false; PENDING_EDITS=[]; PENDING_COUNT=0; MY_PENDING={}; PENDING_IMPORTS=[]; PENDING_IMPORT_COUNT=0; MY_PENDING_IMPORTS=[]; NOTIFICATIONS=[]; UNREAD_COUNT=0; }
     updateAuthBtn();
     render();
   });
