@@ -385,32 +385,6 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .song-check-row .cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--line-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .song-check-row.checked .cb{background:var(--indigo);border-color:var(--indigo);color:#fff}
 
-/* ---- DIAGRAMAS DE ACORDES ---- */
-.chord-tok{cursor:pointer;border-bottom:1px dotted var(--gold);border-radius:2px}
-.chord-tok:hover{background:var(--gold-bg)}
-.chord-modal-body{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:6px}
-.chord-modal-svg{width:100%;display:flex;justify-content:center;touch-action:pan-y}
-.chord-modal-nav{display:flex;align-items:center;gap:14px;justify-content:center}
-.chord-modal-nav button{background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink);width:32px;height:32px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.chord-modal-nav button:disabled{opacity:.3;cursor:default}
-.chord-modal-count{font-size:12.5px;color:var(--muted);font-weight:600;min-width:96px;text-align:center}
-.chord-modal-dots{display:flex;gap:7px;justify-content:center}
-.chord-dot{width:8px;height:8px;border-radius:50%;background:var(--line-strong);cursor:pointer}
-.chord-dot.active{background:var(--gold)}
-.chord-custom-badge{font-size:11.5px;font-weight:700;color:var(--gold);background:var(--gold-bg);border-radius:999px;padding:5px 12px;text-align:center}
-/* acordes especiales de la canción */
-.special-chords-block{max-width:680px;margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-.special-chords-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px}
-.special-chords-grid{display:flex;flex-wrap:wrap;gap:7px}
-.special-chord-btn{border:1px solid var(--gold);background:var(--gold-bg);color:var(--gold-ink,var(--gold));border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700;cursor:pointer}
-/* editor: acordes especiales por canción */
-.custom-chord-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:var(--surface)}
-.custom-chord-card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.custom-chord-card-head input{flex:1}
-.cc-voicing-row{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;margin-bottom:6px}
-.cc-voicing-row input[type=text]{font-family:var(--mono)}
-.cc-voicing-row label{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
-
 </style>
 </head>
 <body>
@@ -656,172 +630,8 @@ function chordsHTML(chords,shift,flat){
     const st=chordTokenStatus(t);
     if(st==="bad") return `<span class="chord-bad" title="No se reconoce como acorde: no cambia de tono. Repórtalo o corrígelo.">${esc(t)}</span>`;
     if(st==="neutral") return esc(t);
-    const disp=transChord(t,shift,flat);
-    return `<span class="chord-tok" data-chord="${esc(disp)}">${esc(disp)}</span>`;
+    return esc(transChord(t,shift,flat));
   }).join("");
-}
-
-// =================================================================
-//  DIAGRAMAS DE ACORDES DE GUITARRA
-// =================================================================
-// Cada acorde: array de "voicings". Cada voicing: {frets:[6 números o "x"], barre:traste|null, difficulty:1-4, recommended:bool}
-// Claves en notación latina, igual que la usa el resto de la app (mayúsculas = mayor, minúsculas+"m" = menor).
-const CHORD_DATA = {
-  "LA":[{frets:[0,0,2,2,2,0],barre:null,difficulty:1,recommended:true},{frets:[5,7,7,6,5,5],barre:5,difficulty:3}],
-  "SI":[{frets:[2,3,4,4,3,2],barre:2,difficulty:2,recommended:true},{frets:[7,9,9,7,8,7],barre:7,difficulty:3}],
-  "DO":[{frets:[0,3,2,0,1,0],barre:null,difficulty:1,recommended:true},{frets:[3,3,2,0,1,0],barre:null,difficulty:2}],
-  "RE":[{frets:[2,3,2,0,0,0],barre:null,difficulty:1,recommended:true},{frets:[5,5,4,5,5,5],barre:5,difficulty:3}],
-  "MI":[{frets:[0,2,2,1,0,0],barre:null,difficulty:1,recommended:true},{frets:[7,9,9,8,7,7],barre:7,difficulty:3}],
-  "FA":[{frets:[1,3,3,2,1,1],barre:1,difficulty:3,recommended:true},{frets:[8,10,10,9,8,8],barre:8,difficulty:4}],
-  "SOL":[{frets:[3,2,0,0,0,3],barre:null,difficulty:2,recommended:true},{frets:[10,10,9,10,10,10],barre:10,difficulty:4}],
-  "lam":[{frets:[0,0,2,2,1,0],barre:null,difficulty:1,recommended:true},{frets:[5,7,7,5,5,5],barre:5,difficulty:3}],
-  "sim":[{frets:[2,3,4,4,3,2],barre:2,difficulty:2,recommended:true},{frets:[7,9,9,7,8,7],barre:7,difficulty:3}],
-  "dom":[{frets:[3,3,5,5,4,3],barre:3,difficulty:3,recommended:true}],
-  "rem":[{frets:[0,0,2,3,1,0],barre:null,difficulty:1,recommended:true},{frets:[5,7,7,5,6,5],barre:5,difficulty:3}],
-  "mim":[{frets:[0,2,2,0,1,0],barre:null,difficulty:1,recommended:true},{frets:[7,9,9,7,8,7],barre:7,difficulty:3}],
-  "fa#m":[{frets:[2,4,4,2,3,2],barre:2,difficulty:2,recommended:true}],
-  "solm":[{frets:[3,5,5,3,4,3],barre:3,difficulty:3,recommended:true}],
-  "LA7":[{frets:[0,0,2,0,2,0],barre:null,difficulty:1,recommended:true}],
-  "DO7":[{frets:[0,3,2,3,1,0],barre:null,difficulty:2,recommended:true}],
-  "RE7":[{frets:[2,3,2,3,1,0],barre:null,difficulty:2,recommended:true}],
-  "MI7":[{frets:[0,2,2,1,3,0],barre:null,difficulty:2,recommended:true}],
-  "SOL7":[{frets:[3,2,0,0,0,1],barre:null,difficulty:2,recommended:true}],
-  "FA#7":[{frets:[2,4,3,4,2,2],barre:null,difficulty:3,recommended:true}],
-  "DOsus4":[{frets:[0,3,3,0,3,0],barre:null,difficulty:2,recommended:true}],
-  "REsus4":[{frets:[2,3,3,0,0,0],barre:null,difficulty:2,recommended:true}],
-  "MIsus4":[{frets:[0,2,2,2,0,0],barre:null,difficulty:1,recommended:true}],
-  "FAsus4":[{frets:[1,3,3,3,1,1],barre:1,difficulty:3,recommended:true}],
-  "SOLsus4":[{frets:[3,3,0,0,0,3],barre:null,difficulty:2,recommended:true}],
-  "LAsus4":[{frets:[0,0,2,2,3,0],barre:null,difficulty:1,recommended:true}],
-  "FA/DO":[{frets:[3,3,3,2,1,1],barre:3,difficulty:3,recommended:true}],
-  "SOL/SI":[{frets:[2,2,0,0,0,3],barre:null,difficulty:2,recommended:true}],
-  "RE/FA#":[{frets:[2,0,0,2,3,0],barre:null,difficulty:2,recommended:true}],
-  "LA/MI":[{frets:[0,0,2,2,2,0],barre:null,difficulty:1,recommended:true}]
-};
-// Convierte un token de acorde (ya transpuesto/mostrado) a una clave de CHORD_DATA, o null si no aplica.
-function chordDiagramKey(tok){
-  if(!tok) return null;
-  const parts=tok.split("/");
-  const main=parts[0], bass=parts[1];
-  const m=main.match(ROOT_RE); if(!m) return null;
-  const root=m[1], acc=m[2], rest=(m[3]||"");
-  const pc=noteToPc(root,acc); if(pc===null) return null;
-  const canon=CANON[pc][0]+CANON[pc][1];
-  const isMinor = main[0]===main[0].toLowerCase() && main[0]!==main[0].toUpperCase();
-  const restL=rest.toLowerCase();
-  let quality="";
-  if(!isMinor){
-    if(restL.startsWith("sus4")) quality="sus4";
-    else if(restL.startsWith("7")) quality="7";
-  }
-  let key = isMinor ? (canon.toLowerCase()+"m") : (canon+quality);
-  if(bass){
-    const bm=bass.match(ROOT_RE);
-    if(bm){
-      const bpc=noteToPc(bm[1],bm[2]);
-      if(bpc!==null){
-        const bcanon=CANON[bpc][0]+CANON[bpc][1];
-        const slashKey=key+"/"+bcanon;
-        if(CHORD_DATA[slashKey]) return slashKey;
-      }
-    }
-  }
-  return CHORD_DATA[key] ? key : null;
-}
-// Retorna {voicings, isCustom} para un acorde dado, chequeando primero los acordes especiales de la canción.
-function getChordDiagrams(chordName, songId){
-  const song = songId!=null ? effective(songId) : null;
-  const custom = song && song.custom_chord_diagrams && song.custom_chord_diagrams[chordName];
-  if(custom && custom.length) return {voicings:custom, isCustom:true};
-  const key=chordDiagramKey(chordName);
-  if(key && CHORD_DATA[key]) return {voicings:CHORD_DATA[key], isCustom:false};
-  return {voicings:[], isCustom:false};
-}
-// Genera un diagrama SVG simple de 6 cuerdas x 5 trastes.
-function generateChordSVG(frets, barre){
-  const W=160,H=200,left=28,right=132,top=42,bottom=178;
-  const sGap=(right-left)/5, fGap=(bottom-top)/5;
-  const numFrets=frets.map(f=>(f===null||f==="x"||f===-1)?null:+f).filter(f=>f!==null && f>0);
-  const minFret = numFrets.length ? Math.min(...numFrets, barre||99) : (barre||0);
-  const startFret = minFret>1 ? minFret-1 : 0;
-  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:200px;height:auto">`;
-  for(let i=0;i<6;i++){
-    const x=left+i*sGap;
-    svg+=`<line x1="${x}" y1="${top}" x2="${x}" y2="${bottom}" stroke="var(--ink)" stroke-width="1.4"/>`;
-  }
-  for(let i=0;i<=5;i++){
-    const y=top+i*fGap;
-    const isNut=(i===0 && startFret===0);
-    svg+=`<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="var(--ink)" stroke-width="${isNut?4:1.2}"/>`;
-  }
-  if(startFret>0){
-    svg+=`<text x="${left-12}" y="${top+fGap*0.72}" font-size="12" fill="var(--ink)" text-anchor="middle">${startFret+1}</text>`;
-  }
-  if(barre){
-    const fi=barre-startFret;
-    if(fi>=1 && fi<=5){
-      const y=top+(fi-0.5)*fGap;
-      svg+=`<line x1="${left}" y1="${y}" x2="${right}" y2="${y}" stroke="var(--gold)" stroke-width="9" stroke-linecap="round" opacity=".85"/>`;
-    }
-  }
-  frets.forEach((f,i)=>{
-    const x=left+i*sGap;
-    if(f===null||f==="x"||f===-1){
-      svg+=`<text x="${x}" y="${top-13}" font-size="14" text-anchor="middle" font-weight="700" fill="var(--danger)">&#215;</text>`;
-    } else if(f===0){
-      svg+=`<circle cx="${x}" cy="${top-16}" r="5.5" fill="none" stroke="var(--ink)" stroke-width="1.4"/>`;
-    } else {
-      const fi=f-startFret;
-      const y=top+(fi-0.5)*fGap;
-      svg+=`<circle cx="${x}" cy="${y}" r="7.5" fill="var(--gold)"/>`;
-    }
-  });
-  svg+=`</svg>`;
-  return svg;
-}
-let CHORD_MODAL={chordName:"",songId:null,voicings:[],idx:0,isCustom:false};
-function openChordModal(chordName, songId){
-  const {voicings,isCustom}=getChordDiagrams(chordName, songId);
-  let idx = voicings.findIndex(v=>v.recommended);
-  if(idx<0) idx=0;
-  CHORD_MODAL={chordName,songId,voicings,idx,isCustom};
-  renderChordModal();
-}
-function renderChordModal(){
-  const st=CHORD_MODAL;
-  const v=st.voicings[st.idx];
-  const n=st.voicings.length;
-  let body;
-  if(!v){
-    body=`<div class="hint" style="padding:24px 0;text-align:center">Diagrama no disponible para este acorde.</div>`;
-  } else {
-    body=`<div class="chord-modal-svg" id="chordSvgWrap">${generateChordSVG(v.frets,v.barre)}</div>`;
-    if(n>1){
-      body+=`<div class="chord-modal-nav">
-        <button class="iconbtn" id="chordPrev" ${st.idx===0?"disabled":""} aria-label="Anterior">&#8249;</button>
-        <span class="chord-modal-count">Voicing ${st.idx+1} de ${n}</span>
-        <button class="iconbtn" id="chordNext" ${st.idx===n-1?"disabled":""} aria-label="Siguiente">&#8250;</button>
-      </div>
-      <div class="chord-modal-dots">${st.voicings.map((_,i)=>`<span class="chord-dot${i===st.idx?" active":""}" data-i="${i}"></span>`).join("")}</div>`;
-    }
-    if(st.isCustom) body+=`<div class="chord-custom-badge">📍 Acorde especial (esta canción solamente)</div>`;
-  }
-  openModal(`<div class="modal-head"><h3>${esc(st.chordName)}</h3>${closeBtn()}</div><div class="modal-body chord-modal-body">${body}</div>`);
-  const prevBtn=document.getElementById("chordPrev"); if(prevBtn) prevBtn.onclick=()=>{if(st.idx>0){st.idx--;renderChordModal();}};
-  const nextBtn=document.getElementById("chordNext"); if(nextBtn) nextBtn.onclick=()=>{if(st.idx<st.voicings.length-1){st.idx++;renderChordModal();}};
-  document.querySelectorAll(".chord-dot").forEach(d=>d.onclick=()=>{st.idx=+d.dataset.i;renderChordModal();});
-  const wrap=document.getElementById("chordSvgWrap");
-  if(wrap && st.voicings.length>1){
-    let touchX=null;
-    wrap.addEventListener("touchstart",e=>{touchX=e.touches[0].clientX;},{passive:true});
-    wrap.addEventListener("touchend",e=>{
-      if(touchX===null) return;
-      const dx=e.changedTouches[0].clientX-touchX;
-      if(dx>40 && st.idx>0){ st.idx--; renderChordModal(); }
-      else if(dx<-40 && st.idx<st.voicings.length-1){ st.idx++; renderChordModal(); }
-      touchX=null;
-    },{passive:true});
-  }
 }
 
 // =================================================================
@@ -1246,10 +1056,6 @@ function renderSong(){
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M7 7v10M11 7v10M15 7v10"/></svg>
       ${noCapo?`Tocando <b>sin cejillo</b> (acordes subidos ${capo})`:`Cejillo en el <b>${romano(capo)}</b> traste`}
     </div>`:""}
-    ${PREFS.showChords && s.custom_chord_diagrams && Object.keys(s.custom_chord_diagrams).length ? `<div class="special-chords-block">
-      <div class="special-chords-head">📍 Acordes especiales en esta canción</div>
-      <div class="special-chords-grid">${Object.keys(s.custom_chord_diagrams).map(cn=>`<button type="button" class="special-chord-btn" data-specialchord="${esc(cn)}">${esc(cn)}</button>`).join("")}</div>
-    </div>`:""}
 
     <div class="body ${mode==="side"?"two-col":""}${PREFS.showChords?"":" no-chords"}" id="songBody" style="--lyric-size:${PREFS.lyricSize}px">`;
 
@@ -1349,8 +1155,6 @@ function renderSong(){
   });
   $main.querySelector("#addCmt").onclick=()=>openAddComment(id);
   $main.querySelector("#reportBtn").onclick=()=>reportSong(id);
-  $main.querySelectorAll(".chord-tok").forEach(el=>{ el.onclick=()=>openChordModal(el.dataset.chord, id); });
-  $main.querySelectorAll("[data-specialchord]").forEach(el=>{ el.onclick=()=>openChordModal(el.dataset.specialchord, id); });
 
   setupAutoscroll();
 }
@@ -1688,25 +1492,13 @@ function requestEdit(id){
   startEdit(id);
 }
 
-// Convierte el JSONB custom_chord_diagrams (guardado) al array editable que usa el editor.
-function customChordsToDraft(obj){
-  return Object.entries(obj||{}).map(([name,voicings])=>({
-    name,
-    voicings:(voicings||[]).map(v=>({
-      frets:(v.frets||[]).map(f=>(f===null||f==="x"||f===-1)?"x":f).join(","),
-      barre:(v.barre||v.barre===0)?String(v.barre):"",
-      recommended:!!v.recommended
-    }))
-  }));
-}
 function startEdit(id){
   const s=effective(id);
-  STATE.editing=true; STATE.editTarget="song"; STATE.songId=id; STATE.ccOpen=false;
+  STATE.editing=true; STATE.editTarget="song"; STATE.songId=id;
   STATE.editDraft={
     title:s.title, categorias:catsOf(s), liturgica:(s.liturgica===undefined?null:s.liturgica),
     coleccion:collOf(s), credits:s.credits||"", capo:+(s.capo||0),
-    sections: JSON.parse(JSON.stringify(s.sections||[])),
-    customChords: customChordsToDraft(s.custom_chord_diagrams)
+    sections: JSON.parse(JSON.stringify(s.sections||[]))
   };
   STATE.view="song";
   window.scrollTo(0,0);
@@ -1715,21 +1507,20 @@ function startEdit(id){
 // editor para una canción en revisión (importada) — sin contraseña, edita el staging
 function startEditStaged(idx){
   const s=STATE.staged[idx];
-  STATE.editing=true; STATE.editTarget="staged"; STATE.editStagedIdx=idx; STATE.view="review"; STATE.ccOpen=false;
+  STATE.editing=true; STATE.editTarget="staged"; STATE.editStagedIdx=idx; STATE.view="review";
   STATE.editDraft={
     title:s.title||"", categorias:catsOf(s), liturgica:(s.liturgica===undefined?null:s.liturgica),
     coleccion:s.coleccion||"general", credits:s.credits||"", capo:+(s.capo||0),
-    sections: JSON.parse(JSON.stringify(s.sections||[[{lyric:"",chords:""}]])),
-    customChords: customChordsToDraft(s.custom_chord_diagrams)
+    sections: JSON.parse(JSON.stringify(s.sections||[[{lyric:"",chords:""}]]))
   };
   window.scrollTo(0,0);
   render();
 }
 // editor para una canción nueva manual
 function startAddManual(){
-  STATE.editing=true; STATE.editTarget="new"; STATE.view="song"; STATE.songId=null; STATE.ccOpen=false;
+  STATE.editing=true; STATE.editTarget="new"; STATE.view="song"; STATE.songId=null;
   STATE.editDraft={ title:"", categorias:[], liturgica:null, coleccion:"general", credits:"", capo:0,
-    sections:[[{lyric:"",chords:""}]], customChords:[] };
+    sections:[[{lyric:"",chords:""}]] };
   window.scrollTo(0,0);
   render();
 }
@@ -1738,38 +1529,18 @@ function startAddVersion(baseId){
   if(!isLoggedIn()){ openAuthModal(); return; }
   const base=SONGS[baseId]; if(!base)return;
   const siblings=songVersions(baseId).length;
-  STATE.editing=true; STATE.editTarget="new_version"; STATE.view="song"; STATE.songId=null; STATE.ccOpen=false;
+  STATE.editing=true; STATE.editTarget="new_version"; STATE.view="song"; STATE.songId=null;
   STATE.editDraft={
     title:base.title, categorias:catsOf(base), liturgica:(base.liturgica===undefined?null:base.liturgica),
     coleccion:collOf(base), credits:base.credits||"", capo:+(base.capo||0),
     sections: JSON.parse(JSON.stringify(base.sections||[[{lyric:"",chords:""}]])),
     versionLabel:"Versión "+(siblings+2),
-    _versionParent: baseId, _versionParentTitle: base.title,
-    customChords: []
+    _versionParent: baseId, _versionParentTitle: base.title
   };
   window.scrollTo(0,0);
   render();
 }
 
-// Tarjeta editable de un acorde especial (con sus voicings) dentro del editor de canción.
-function ccCardHTML(c,ci){
-  const voicings = c.voicings && c.voicings.length ? c.voicings : [{frets:"",barre:"",recommended:true}];
-  const vHTML = voicings.map((v,vi)=>`
-    <div class="cc-voicing-row">
-      <input type="text" data-ccfrets="${ci}-${vi}" placeholder="0,0,2,2,1,0" value="${esc(v.frets||"")}">
-      <input type="text" data-ccbarre="${ci}-${vi}" placeholder="cejilla" style="width:78px" value="${esc(v.barre||"")}">
-      <label><input type="radio" name="ccrec-${ci}" data-ccrec="${ci}-${vi}" ${v.recommended?"checked":""}> recomendada</label>
-      <button type="button" class="txt-mini del" data-ccdelvoicing="${ci}-${vi}">✕</button>
-    </div>`).join("");
-  return `<div class="custom-chord-card" data-ccard="${ci}">
-    <div class="custom-chord-card-head">
-      <input type="text" data-ccname="${ci}" placeholder="Nombre del acorde (ej. F, Bm/F#, C7sus4)" value="${esc(c.name||"")}">
-      <button type="button" class="txt-mini del" data-ccdel="${ci}">Eliminar acorde</button>
-    </div>
-    ${vHTML}
-    <button type="button" class="txt-mini" data-ccaddvoicing="${ci}" style="color:var(--indigo)">+ Añadir voicing</button>
-  </div>`;
-}
 function renderEditor(){
   const id=STATE.songId, d=STATE.editDraft;
   const tgt=STATE.editTarget;
@@ -1843,20 +1614,6 @@ function renderEditor(){
     <button class="btn" id="addSection" style="width:100%;justify-content:center;margin:4px 0 20px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Agregar estrofa</button>
 `;
 
-  // ---- Acordes especiales de esta canción (opcional) ----
-  const cc = d.customChords || (d.customChords=[]);
-  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px;border-top:1px solid var(--line);padding-top:16px">
-      <button type="button" id="ccToggle" class="txt-mini" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">
-        ${STATE.ccOpen?"▾":"▸"} ⚙️ Acordes especiales (opcional)${cc.length?` <span class="pending-badge">${cc.length}</span>`:""}
-      </button>
-    </div>
-    <div id="ccPanel" style="${STATE.ccOpen?"":"display:none"}">
-      <div class="hint" style="margin:0 0 10px">Define digitaciones específicas para esta canción (no afectan otras canciones). Trastes separados por coma, "x" = cuerda que no se toca. Ej: 0,0,2,2,1,0</div>
-      <div id="ccList">${cc.map((c,ci)=>ccCardHTML(c,ci)).join("")}</div>
-      <button type="button" class="txt-mini" id="ccAdd" style="color:var(--indigo)">+ Añadir acorde especial</button>
-    </div>
-`;
-
   if(tgt==="song" && isAdmin()){
     // ---- moderación de enlace y comentarios (solo admin) ----
     const lnk=LINKS[id]||null;
@@ -1918,23 +1675,6 @@ function readEditorIntoDraft(){
     const [si,li]=inp.dataset.ly.split("-").map(Number);
     d.sections[si][li].lyric=inp.value;
   });
-  if(d.customChords){
-    document.querySelectorAll("[data-ccname]").forEach(inp=>{
-      const i=+inp.dataset.ccname; if(d.customChords[i]) d.customChords[i].name=inp.value;
-    });
-    document.querySelectorAll("[data-ccfrets]").forEach(inp=>{
-      const [ci,vi]=inp.dataset.ccfrets.split("-").map(Number);
-      if(d.customChords[ci]&&d.customChords[ci].voicings[vi]) d.customChords[ci].voicings[vi].frets=inp.value;
-    });
-    document.querySelectorAll("[data-ccbarre]").forEach(inp=>{
-      const [ci,vi]=inp.dataset.ccbarre.split("-").map(Number);
-      if(d.customChords[ci]&&d.customChords[ci].voicings[vi]) d.customChords[ci].voicings[vi].barre=inp.value;
-    });
-    document.querySelectorAll("[data-ccrec]:checked").forEach(inp=>{
-      const [ci,vi]=inp.dataset.ccrec.split("-").map(Number);
-      if(d.customChords[ci]) d.customChords[ci].voicings.forEach((v,i)=>{ v.recommended=(i===vi); });
-    });
-  }
 }
 // Evita doble-envío: deshabilita el botón de guardar y muestra "Guardando…"
 // hasta que la operación termine (éxito = la pantalla cambia igual; error = se reactiva).
@@ -1968,37 +1708,6 @@ function attachEditorEvents(id){
     render();
   };
   document.getElementById("addSection").onclick=()=>{readEditorIntoDraft();STATE.editDraft.sections.push([{lyric:"",chords:""}]);render()};
-
-  // ---- acordes especiales (opcional) ----
-  const ccToggle=document.getElementById("ccToggle");
-  if(ccToggle) ccToggle.onclick=()=>{ readEditorIntoDraft(); STATE.ccOpen=!STATE.ccOpen; render(); };
-  const ccAdd=document.getElementById("ccAdd");
-  if(ccAdd) ccAdd.onclick=()=>{
-    readEditorIntoDraft();
-    STATE.ccOpen=true;
-    STATE.editDraft.customChords=STATE.editDraft.customChords||[];
-    STATE.editDraft.customChords.push({name:"",voicings:[{frets:"",barre:"",recommended:true}]});
-    render();
-  };
-  document.querySelectorAll("[data-ccdel]").forEach(b=>b.onclick=()=>{
-    readEditorIntoDraft(); STATE.ccOpen=true;
-    STATE.editDraft.customChords.splice(+b.dataset.ccdel,1);
-    render();
-  });
-  document.querySelectorAll("[data-ccaddvoicing]").forEach(b=>b.onclick=()=>{
-    readEditorIntoDraft(); STATE.ccOpen=true;
-    const i=+b.dataset.ccaddvoicing;
-    STATE.editDraft.customChords[i].voicings.push({frets:"",barre:"",recommended:false});
-    render();
-  });
-  document.querySelectorAll("[data-ccdelvoicing]").forEach(b=>b.onclick=()=>{
-    readEditorIntoDraft(); STATE.ccOpen=true;
-    const [ci,vi]=b.dataset.ccdelvoicing.split("-").map(Number);
-    const voicings=STATE.editDraft.customChords[ci].voicings;
-    voicings.splice(vi,1);
-    if(voicings.length && !voicings.some(v=>v.recommended)) voicings[0].recommended=true;
-    render();
-  });
   document.getElementById("saveEdit").onclick=async()=>{
     const sbtn=lockSaveBtn(); if(!sbtn)return; // ya se está guardando, ignora clicks repetidos
     readEditorIntoDraft();
@@ -2009,40 +1718,6 @@ function attachEditorEvents(id){
     if(d.liturgica===true||d.liturgica===false) songObj.liturgica=d.liturgica;
     if(d.capo>0) songObj.capo=d.capo; else songObj.capo=0;
     if(d.credits&&d.credits.trim()) songObj.credits=d.credits.trim(); else songObj.credits=null;
-
-    // ---- validar y construir acordes especiales (custom_chord_diagrams) ----
-    const customChordsObj={};
-    for(const cc of (d.customChords||[])){
-      const cname=(cc.name||"").trim();
-      if(!cname) continue;
-      const voicingsOut=[];
-      for(const v of (cc.voicings||[])){
-        const raw=(v.frets||"").trim();
-        if(!raw) continue;
-        const parts=raw.split(",").map(x=>x.trim());
-        if(parts.length!==6){ toast(`Acorde "${cname}": se necesitan exactamente 6 valores de cuerdas separados por coma.`); unlockSaveBtn(); return; }
-        const frets=[]; let bad=false;
-        for(const p of parts){
-          if(/^x$/i.test(p)){ frets.push("x"); continue; }
-          const n=parseInt(p,10);
-          if(isNaN(n)||n<0||n>12){ bad=true; break; }
-          frets.push(n);
-        }
-        if(bad){ toast(`Acorde "${cname}": cada cuerda debe ser 0-12 o "x".`); unlockSaveBtn(); return; }
-        let barre=null;
-        if(v.barre!==undefined && String(v.barre).trim()!==""){
-          const b=parseInt(v.barre,10);
-          if(isNaN(b)||b<0||b>12){ toast(`Acorde "${cname}": la cejilla debe ser 0-12.`); unlockSaveBtn(); return; }
-          barre=b;
-        }
-        voicingsOut.push({frets,barre,recommended:!!v.recommended});
-      }
-      if(!voicingsOut.length) continue;
-      if(!voicingsOut.some(v=>v.recommended)) voicingsOut[0].recommended=true;
-      else { let found=false; voicingsOut.forEach(v=>{ if(v.recommended){ if(found)v.recommended=false; else found=true; } }); }
-      customChordsObj[cname]=voicingsOut;
-    }
-    songObj.custom_chord_diagrams=customChordsObj;
 
     if(tgt==="new"){
       const dup=findDuplicateCandidate(songObj.title, songObj.sections);
@@ -3556,7 +3231,6 @@ function openPendingEditsPanel(){
     STATE.editPendingId=pid;
     STATE.songId=sid;
     STATE.view="song";
-    STATE.ccOpen=false;
     STATE.editDraft={
       title:pe.edit_data.title||s.title||"",
       categorias:pe.edit_data.categorias||catsOf(s),
@@ -3564,8 +3238,7 @@ function openPendingEditsPanel(){
       coleccion:pe.edit_data.coleccion||collOf(s),
       credits:pe.edit_data.credits||s.credits||"",
       capo:+(pe.edit_data.capo||0),
-      sections:JSON.parse(JSON.stringify(pe.edit_data.sections||s.sections||[[{lyric:"",chords:""}]])),
-      customChords: customChordsToDraft(pe.edit_data.custom_chord_diagrams||s.custom_chord_diagrams)
+      sections:JSON.parse(JSON.stringify(pe.edit_data.sections||s.sections||[[{lyric:"",chords:""}]]))
     };
     window.scrollTo(0,0);
     render();
