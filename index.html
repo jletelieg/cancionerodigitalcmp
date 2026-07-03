@@ -281,6 +281,8 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .tagsel.on .dot{outline:1px solid rgba(255,255,255,.5)}
 
 /* acordes no reconocidos (rojo) */
+.chord-tok{cursor:pointer;border-radius:4px;transition:background .12s,color .12s}
+.chord-tok:hover{background:var(--gold-bg);color:var(--gold)}
 .chord-bad{color:var(--danger);text-decoration:underline wavy var(--danger);text-underline-offset:2px}
 .ci-bad{border-color:var(--danger)!important;background:var(--gold-bg)!important}
 .chord-warn{background:var(--gold-bg);color:var(--danger);border:1px solid var(--danger);border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.4;margin:4px 0 8px}
@@ -384,6 +386,70 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .song-check-row:hover{background:var(--surface-2)}
 .song-check-row .cb{width:18px;height:18px;border-radius:5px;border:2px solid var(--line-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .song-check-row.checked .cb{background:var(--indigo);border-color:var(--indigo);color:#fff}
+
+/* ==================== diagramas de acordes (vista canción) ==================== */
+.sv-chords{max-width:680px;margin-top:26px}
+.cd-strip{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.cd-cell{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 3px 4px}
+.cd-svg{display:block;width:64px;height:78px}
+
+.cd-label{font-family:var(--mono);font-size:9px;font-weight:700;fill:var(--ink);letter-spacing:.01em}
+.cd-nut{fill:var(--ink)}
+.cd-fretline{stroke:var(--line-strong);stroke-width:.7}
+.cd-string{stroke:var(--line-strong);stroke-width:.7}
+.cd-fretnum{font-family:var(--mono);font-size:8px;fill:var(--muted)}
+.cd-barre{stroke:var(--gold);stroke-width:4.5;stroke-linecap:round}
+.cd-open{fill:none;stroke:var(--ink);stroke-width:1}
+.cd-dot{fill:var(--gold)}
+.cd-mute{font-family:var(--mono);font-size:8px;fill:var(--danger);font-weight:700}
+
+.cd-missing{
+  width:64px;height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;text-align:center;font-family:var(--mono);font-size:9px;color:var(--muted);
+  border:1px dashed var(--line-strong);border-radius:6px;padding:4px;box-sizing:border-box
+}
+.cd-missing-mark{font-size:14px;font-weight:700;color:var(--danger)}
+
+/* ==================== chips de acordes (formulario de edición) ==================== */
+.cd-chip-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.cd-chip{
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;
+  padding:3px 3px 2px;cursor:pointer;transition:border-color .15s
+}
+.cd-chip:hover{border-color:var(--gold)}
+.cd-chip .cd-svg{width:52px;height:64px}
+.cd-chip-custom{border-color:var(--gold);border-width:2px}
+.cd-chip .cd-missing{width:52px;height:64px}
+
+/* ==================== modal editor de un acorde ==================== */
+.cd-editor-preview{display:flex;justify-content:center;padding:10px 0 4px}
+.cd-editor-preview .cd-svg{width:110px;height:132px}
+
+.cd-editor-tabs{display:flex;gap:8px;margin:14px 0}
+.cd-tab{
+  flex:1;text-align:center;padding:9px 10px;border-radius:9px;border:1px solid var(--line-strong);
+  background:var(--surface);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer
+}
+.cd-tab.on{background:var(--indigo);color:var(--indigo-ink);border-color:var(--indigo)}
+.cd-tab:disabled{opacity:.35;cursor:not-allowed}
+
+.cd-lib-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 2px}
+
+.cd-manual-editor{display:flex;justify-content:center;padding:6px 0}
+.cd-editor-svg{width:220px;height:196px}
+.cd-editor-fretnum{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+
+.cd-mute-btn{font-family:var(--mono);font-size:13px;font-weight:700;fill:var(--muted);cursor:pointer}
+.cd-mute-btn.on{fill:var(--danger)}
+.cd-open-btn{fill:none;stroke:var(--line-strong);stroke-width:1.4;cursor:pointer}
+.cd-open-btn.on{stroke:var(--ink);stroke-width:2}
+.cd-cell-hit{fill:transparent;cursor:pointer}
+.cd-cell-hit:hover{fill:var(--gold-bg)}
+.cd-barre-btn{fill:var(--surface);stroke:var(--line-strong);stroke-width:.6;cursor:pointer}
+.cd-barre-btn.on{fill:var(--gold)}
+
+.cd-basefret-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.cd-basefret-val{font-family:var(--mono);font-weight:700;min-width:18px;text-align:center}
 
 </style>
 </head>
@@ -620,8 +686,9 @@ function songHasBadChord(s){
   for(const sec of s.sections||[]) for(const ln of sec) if(lineHasBadChord(ln.chords)) return true;
   return false;
 }
-// HTML de una línea de acordes: transpone los reconocidos, marca en rojo los no reconocidos
-function chordsHTML(chords,shift,flat){
+// HTML de una línea de acordes: transpone los reconocidos, marca en rojo los no reconocidos.
+// Los acordes reconocidos ('ok') se envuelven en un <span> clickeable que muestra su diagrama.
+function chordsHTML(chords,shift,flat,song){
   if(!chords) return "";
   return chords.split(/(\s+)/).map(t=>{
     // runs de espacios: se conserva UN espacio normal (punto de quiebre para que la línea
@@ -630,8 +697,402 @@ function chordsHTML(chords,shift,flat){
     const st=chordTokenStatus(t);
     if(st==="bad") return `<span class="chord-bad" title="No se reconoce como acorde: no cambia de tono. Repórtalo o corrígelo.">${esc(t)}</span>`;
     if(st==="neutral") return esc(t);
-    return esc(transChord(t,shift,flat));
+    const transposed=transChord(t,shift,flat);
+    const key=canonicalChordKey(transposed);
+    if(!key) return esc(transposed);
+    return `<span class="chord-tok" data-chordkey="${esc(key)}" data-chordlabel="${esc(transposed)}" title="Ver diagrama de ${esc(transposed)}">${esc(transposed)}</span>`;
   }).join("");
+}
+
+// =================================================================
+//  DIAGRAMAS DE ACORDES
+// =================================================================
+const CD_ROWS = 4;   // filas visibles en el diagrama — cubre el 100% de los voicings de chords-db (máx real: 4)
+const CD_STRINGS = 6;
+
+// ---- librería global (lazy load, una sola vez por sesión) ----
+let GLOBAL_CHORDS = null;
+let _chordsLoadPromise = null;
+function loadGlobalChords(){
+  if(GLOBAL_CHORDS) return Promise.resolve(GLOBAL_CHORDS);
+  if(_chordsLoadPromise) return _chordsLoadPromise;
+  _chordsLoadPromise = fetch("chords-db-latino.json")
+    .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .then(data=>{ GLOBAL_CHORDS=data; return data; })
+    .catch(err=>{
+      console.error("No se pudo cargar la librería de acordes:", err);
+      GLOBAL_CHORDS={};
+      return GLOBAL_CHORDS;
+    });
+  return _chordsLoadPromise;
+}
+
+// ---- clave canónica de un acorde (para lookup) ----
+// "SOLm7" -> "SOLm7"   "REm/fa#" -> "REm/FA#"   devuelve null si no es un acorde reconocible
+function canonicalChordKey(token){
+  if(!token) return null;
+  const segs = token.split("/");
+  const out = [];
+  for(const seg of segs){
+    const m = seg.match(ROOT_RE);
+    if(!m) return null;
+    const root=m[1], acc=m[2], rest=m[3];
+    const pc = noteToPc(root, acc);
+    if(pc===null) return null;
+    const base=CANON[pc][0], nacc=CANON[pc][1];
+    out.push(base+nacc+rest);
+  }
+  return out.join("/");
+}
+
+// ---- lista ordenada de acordes únicos usados en una canción (vista), ya transpuestos ----
+function extractSongChordKeys(song, shift, flat){
+  const seen = new Set();
+  const order = [];
+  for(const sec of song.sections||[]){
+    for(const ln of sec){
+      if(!ln.chords) continue;
+      for(const tok of ln.chords.split(/\s+/)){
+        if(!tok) continue;
+        if(chordTokenStatus(tok)!=="ok") continue; // ignora símbolos (| - %) y acordes no reconocidos
+        const transposed = transChord(tok, shift, flat);
+        const key = canonicalChordKey(transposed);
+        if(!key) continue;
+        if(!seen.has(key)){ seen.add(key); order.push(key); }
+      }
+    }
+  }
+  return order;
+}
+
+// ---- resolución de diagrama: override de la canción > librería global ----
+function getChordDiagram(key, song){
+  const custom = song && song.custom_chord_diagrams && song.custom_chord_diagrams[key];
+  if(custom) return custom;
+  const lib = GLOBAL_CHORDS && GLOBAL_CHORDS[key];
+  if(lib && lib.length) return lib[0]; // primer voicing = default de la librería
+  return null;
+}
+
+// ---- popover con el diagrama de UN acorde, al hacer click sobre él en la letra ----
+function openChordDiagramPopup(key,label,song){
+  if(!key) return;
+  const voicing = getChordDiagram(key, song);
+  const svg = chordDiagramSVG(voicing, label||key);
+  openModal(`<div class="modal-head"><h3>Acorde: ${esc(label||key)}</h3>${closeBtn()}</div>
+    <div class="modal-body" style="display:flex;justify-content:center;padding:22px 18px 34px">
+      <div style="transform:scale(2.1);transform-origin:center">${svg}</div>
+    </div>`);
+}
+
+// ---- SVG de un diagrama individual ----
+function chordDiagramSVG(voicing, label){
+  if(!voicing){
+    return `<div class="cd-missing" title="Sin diagrama para ${esc(label)}">${esc(label)}<br><span class="cd-missing-mark">?</span></div>`;
+  }
+  const {frets, baseFret=1, barres=[]} = voicing;
+  const ROWS=CD_ROWS, STRINGS=CD_STRINGS;
+  const W=76, H=92;
+  const padL=11, padR=7, padT=20, padB=8;
+  const gridW=W-padL-padR, gridH=H-padT-padB;
+  const stepX=gridW/(STRINGS-1), stepY=gridH/ROWS;
+
+  let s = `<svg class="cd-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  s += `<text x="${W/2}" y="10" class="cd-label" text-anchor="middle">${esc(label)}</text>`;
+
+  if(baseFret<=1){
+    s += `<rect x="${padL}" y="${padT-2}" width="${gridW}" height="2.6" class="cd-nut"/>`;
+  } else {
+    s += `<text x="${padL-4}" y="${padT+stepY*0.75}" class="cd-fretnum" text-anchor="end">${baseFret}</text>`;
+  }
+
+  for(let f=0; f<=ROWS; f++){
+    const y=padT+f*stepY;
+    s += `<line x1="${padL}" y1="${y}" x2="${padL+gridW}" y2="${y}" class="cd-fretline"/>`;
+  }
+  for(let i=0;i<STRINGS;i++){
+    const x=padL+i*stepX;
+    s += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+gridH}" class="cd-string"/>`;
+  }
+
+  // cejillas: valores de barres[] y frets[] son POSICIÓN RELATIVA dentro del
+  // diagrama (1 = primera fila mostrada), verificado contra el campo midi de chords-db
+  barres.forEach(row=>{
+    if(row<1||row>ROWS) return;
+    let first=-1,last=-1;
+    frets.forEach((fr,i)=>{ if(fr===row){ if(first===-1)first=i; last=i; } });
+    if(first===-1||first===last) return;
+    const y=padT+(row-0.5)*stepY;
+    s += `<line x1="${padL+first*stepX}" y1="${y}" x2="${padL+last*stepX}" y2="${y}" class="cd-barre"/>`;
+  });
+
+  frets.forEach((fr,i)=>{
+    const x=padL+i*stepX;
+    if(fr===-1){
+      s += `<text x="${x}" y="${padT-6}" class="cd-mute" text-anchor="middle">×</text>`;
+    } else if(fr===0){
+      s += `<circle cx="${x}" cy="${padT-6}" r="2.6" class="cd-open"/>`;
+    } else if(fr>=1 && fr<=ROWS){
+      const y=padT+(fr-0.5)*stepY;
+      s += `<circle cx="${x}" cy="${y}" r="3.6" class="cd-dot"/>`;
+    }
+  });
+
+  s += `</svg>`;
+  return s;
+}
+
+// ---- footer estático de la vista de canción ----
+function chordFooterHTML(song, shift, flat){
+  if(!GLOBAL_CHORDS) return ""; // aún no cargó la librería; se re-renderiza cuando resuelva
+  const keys = extractSongChordKeys(song, shift, flat);
+  if(!keys.length) return "";
+  const cells = keys.map(k=>{
+    const voicing = getChordDiagram(k, song);
+    return `<div class="cd-cell">${chordDiagramSVG(voicing, k)}</div>`;
+  }).join("");
+  return `<div class="sv-chords"><div class="ex-head">Acordes usados</div><div class="cd-strip">${cells}</div></div>`;
+}
+
+// =================================================================
+//  EDITOR DE DIAGRAMAS DE ACORDES (dentro del editor de canciones)
+// =================================================================
+
+// Lee los acordes DIRECTO del DOM (fuente de verdad mientras se edita,
+// igual criterio que usa validateChords()). Sin transponer: en el editor
+// siempre se trabaja con el acorde tal cual está escrito en la canción.
+function extractDraftChordKeys(){
+  const seen=new Set(), order=[];
+  document.querySelectorAll(".ci").forEach(inp=>{
+    (inp.value||"").split(/\s+/).forEach(tok=>{
+      if(!tok) return;
+      if(chordTokenStatus(tok)!=="ok") return;
+      const key=canonicalChordKey(tok);
+      if(!key) return;
+      if(!seen.has(key)){ seen.add(key); order.push(key); }
+    });
+  });
+  return order;
+}
+
+function refreshChordChips(){
+  const wrap=document.getElementById("edChordChips");
+  if(!wrap) return;
+
+  if(!GLOBAL_CHORDS){
+    wrap.innerHTML=`<div class="hint" style="margin:0">Cargando librería de acordes…</div>`;
+    loadGlobalChords().then(refreshChordChips);
+    return;
+  }
+
+  const keys=extractDraftChordKeys();
+  if(!keys.length){
+    wrap.innerHTML=`<div class="hint" style="margin:0">Escribe acordes en las estrofas para poder editar sus diagramas.</div>`;
+    return;
+  }
+
+  const overrides=STATE.editDraft.custom_chord_diagrams||{};
+  wrap.innerHTML=keys.map(k=>{
+    const custom=overrides[k];
+    const voicing=custom || (GLOBAL_CHORDS[k] && GLOBAL_CHORDS[k][0]) || null;
+    const thumb=chordDiagramSVG(voicing, k);
+    const title=custom?"Diagrama personalizado — click para editar":(voicing?"Diagrama de la librería — click para editar":"Sin diagrama — click para dibujar");
+    return `<button type="button" class="cd-chip${custom?" cd-chip-custom":""}" data-editchord="${esc(k)}" title="${title}">${thumb}</button>`;
+  }).join("");
+
+  wrap.querySelectorAll("[data-editchord]").forEach(b=>b.onclick=()=>openChordEditor(b.dataset.editchord));
+}
+
+function openChordEditor(key){
+  const d=STATE.editDraft;
+  const overrideRaw=(d.custom_chord_diagrams||{})[key];
+  const libVoicings=(GLOBAL_CHORDS && GLOBAL_CHORDS[key]) || [];
+
+  let initial, mode, libIndex=0;
+  if(overrideRaw){
+    initial={ frets:[...overrideRaw.frets], baseFret:overrideRaw.baseFret||1, barres:[...(overrideRaw.barres||[])] };
+    mode="manual";
+    const match=libVoicings.findIndex(v=>JSON.stringify(v.frets)===JSON.stringify(overrideRaw.frets) && (v.baseFret||1)===(overrideRaw.baseFret||1));
+    if(match>=0){ mode="library"; libIndex=match; }
+  } else if(libVoicings.length){
+    initial={ frets:[...libVoicings[0].frets], baseFret:libVoicings[0].baseFret||1, barres:[...(libVoicings[0].barres||[])] };
+    mode="library";
+  } else {
+    initial={ frets:[-1,-1,-1,-1,-1,-1], baseFret:1, barres:[] };
+    mode="manual";
+  }
+
+  STATE.chordEditor={ key, ...initial, libVoicings, libIndex, mode };
+  renderChordEditorModal();
+}
+
+function renderChordEditorModal(){
+  const ce=STATE.chordEditor;
+  const hasLib=ce.libVoicings.length>0;
+  const preview=chordDiagramSVG({frets:ce.frets, baseFret:ce.baseFret, barres:ce.barres}, ce.key);
+
+  const html=`<div class="modal-head"><h3>Acorde: ${esc(ce.key)}</h3>${closeBtn()}</div>
+  <div class="modal-body">
+    <div class="cd-editor-preview">${preview}</div>
+
+    <div class="cd-editor-tabs">
+      <button type="button" class="cd-tab${ce.mode==="library"?" on":""}" id="cdTabLib" ${hasLib?"":"disabled"}>Elegir de la librería${hasLib?` (${ce.libVoicings.length})`:""}</button>
+      <button type="button" class="cd-tab${ce.mode==="manual"?" on":""}" id="cdTabManual">Dibujar a mano</button>
+    </div>
+
+    ${ce.mode==="library" ? `
+      <div class="cd-lib-nav">
+        <button type="button" class="btn sm" id="cdLibPrev" ${ce.libIndex<=0?"disabled":""}>‹ Anterior</button>
+        <span class="hint" style="margin:0">Voicing ${ce.libIndex+1} de ${ce.libVoicings.length}</span>
+        <button type="button" class="btn sm" id="cdLibNext" ${ce.libIndex>=ce.libVoicings.length-1?"disabled":""}>Siguiente ›</button>
+      </div>
+    ` : `
+      <div class="cd-manual-editor" id="cdManualEditor"></div>
+      <div class="cd-basefret-row">
+        <span class="hint" style="margin:0">Traste base</span>
+        <button type="button" class="btn sm" id="cdBaseDown" ${ce.baseFret<=1?"disabled":""}>−</button>
+        <span class="cd-basefret-val">${ce.baseFret}</span>
+        <button type="button" class="btn sm" id="cdBaseUp">+</button>
+      </div>
+      <div class="hint" style="margin-top:10px">Click en <b>×</b>/<b>○</b> para silenciar o dejar al aire una cuerda. Click en la grilla para marcar el traste. Click en el número de traste (izquierda) para agregar cejilla en esa fila.</div>
+    `}
+
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button type="button" class="btn" id="cdRestore" style="flex:1;justify-content:center">Restaurar por defecto</button>
+      <button type="button" class="btn primary" id="cdSave" style="flex:1;justify-content:center">Guardar</button>
+    </div>
+  </div>`;
+
+  openModal(html);
+  attachChordEditorEvents();
+  if(ce.mode==="manual") renderManualFretboard();
+}
+
+function attachChordEditorEvents(){
+  const ce=STATE.chordEditor;
+
+  const tabLib=document.getElementById("cdTabLib");
+  const tabManual=document.getElementById("cdTabManual");
+  if(tabLib) tabLib.onclick=()=>{
+    if(!ce.libVoicings.length) return;
+    ce.mode="library";
+    applyLibVoicing();
+  };
+  if(tabManual) tabManual.onclick=()=>{ ce.mode="manual"; renderChordEditorModal(); };
+
+  const prev=document.getElementById("cdLibPrev");
+  const next=document.getElementById("cdLibNext");
+  if(prev) prev.onclick=()=>{ if(ce.libIndex>0){ ce.libIndex--; applyLibVoicing(); } };
+  if(next) next.onclick=()=>{ if(ce.libIndex<ce.libVoicings.length-1){ ce.libIndex++; applyLibVoicing(); } };
+
+  const baseDown=document.getElementById("cdBaseDown");
+  const baseUp=document.getElementById("cdBaseUp");
+  if(baseDown) baseDown.onclick=()=>{ if(ce.baseFret>1){ ce.baseFret--; renderChordEditorModal(); } };
+  if(baseUp) baseUp.onclick=()=>{ ce.baseFret++; renderChordEditorModal(); };
+
+  document.getElementById("cdRestore").onclick=()=>{
+    if(STATE.editDraft.custom_chord_diagrams) delete STATE.editDraft.custom_chord_diagrams[ce.key];
+    closeModal(); STATE.chordEditor=null;
+    refreshChordChips();
+    toast("Diagrama restaurado a la librería");
+  };
+  document.getElementById("cdSave").onclick=()=>{
+    if(!STATE.editDraft.custom_chord_diagrams) STATE.editDraft.custom_chord_diagrams={};
+    STATE.editDraft.custom_chord_diagrams[ce.key]={ frets:[...ce.frets], baseFret:ce.baseFret, barres:[...ce.barres] };
+    closeModal(); STATE.chordEditor=null;
+    refreshChordChips();
+    toast("Diagrama guardado");
+  };
+}
+
+function applyLibVoicing(){
+  const ce=STATE.chordEditor;
+  const v=ce.libVoicings[ce.libIndex];
+  ce.frets=[...v.frets]; ce.baseFret=v.baseFret||1; ce.barres=[...(v.barres||[])];
+  renderChordEditorModal();
+}
+
+function renderManualFretboard(){
+  const host=document.getElementById("cdManualEditor");
+  if(!host) return;
+  const ce=STATE.chordEditor;
+  const ROWS=CD_ROWS, STRINGS=CD_STRINGS;
+  const W=220, H=196;
+  const padL=28, padR=14, padT=50, padB=10;
+  const gridW=W-padL-padR, gridH=H-padT-padB;
+  const stepX=gridW/(STRINGS-1), stepY=gridH/ROWS;
+
+  let s=`<svg class="cd-editor-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  s+=`<rect x="${padL}" y="${padT-2}" width="${gridW}" height="3" class="cd-nut"/>`;
+
+  for(let f=0; f<=ROWS; f++){
+    const y=padT+f*stepY;
+    s+=`<line x1="${padL}" y1="${y}" x2="${padL+gridW}" y2="${y}" class="cd-fretline"/>`;
+  }
+  for(let i=0;i<STRINGS;i++){
+    const x=padL+i*stepX;
+    s+=`<line x1="${x}" y1="${padT}" x2="${x}" y2="${padT+gridH}" class="cd-string"/>`;
+  }
+
+  for(let row=1; row<=ROWS; row++){
+    const y=padT+(row-0.5)*stepY;
+    const isBarre=ce.barres.includes(row);
+    s+=`<text x="${padL-10}" y="${y+3}" text-anchor="end" class="cd-editor-fretnum">${ce.baseFret+row-1}</text>`;
+    s+=`<rect x="1" y="${y-6}" width="15" height="12" rx="3" class="cd-barre-btn${isBarre?" on":""}" data-barrerow="${row}"></rect>`;
+  }
+
+  ce.barres.forEach(row=>{
+    let first=-1,last=-1;
+    ce.frets.forEach((fr,i)=>{ if(fr===row){ if(first===-1)first=i; last=i; } });
+    if(first===-1||first===last) return;
+    const y=padT+(row-0.5)*stepY;
+    s+=`<line x1="${padL+first*stepX}" y1="${y}" x2="${padL+last*stepX}" y2="${y}" class="cd-barre"/>`;
+  });
+
+  ce.frets.forEach((fr,i)=>{
+    const x=padL+i*stepX;
+    s+=`<text x="${x}" y="${padT-32}" text-anchor="middle" class="cd-mute-btn${fr===-1?" on":""}" data-stringtoggle="${i}" data-tostate="-1">×</text>`;
+    s+=`<circle cx="${x}" cy="${padT-16}" r="5.5" class="cd-open-btn${fr===0?" on":""}" data-stringtoggle="${i}" data-tostate="0"></circle>`;
+
+    if(fr>=1 && fr<=ROWS){
+      const y=padT+(fr-0.5)*stepY;
+      s+=`<circle cx="${x}" cy="${y}" r="7.5" class="cd-dot"/>`;
+    }
+    for(let row=1; row<=ROWS; row++){
+      const y=padT+(row-0.5)*stepY;
+      s+=`<rect x="${x-stepX/2}" y="${y-stepY/2}" width="${stepX}" height="${stepY}" class="cd-cell-hit" data-stringfret="${i}" data-row="${row}"></rect>`;
+    }
+  });
+
+  s+=`</svg>`;
+  host.innerHTML=s;
+
+  host.querySelectorAll("[data-stringtoggle]").forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.stringtoggle, target=+el.dataset.tostate;
+    ce.frets[i]=target;
+    renderManualFretboard();
+    updateChordEditorPreview();
+  });
+  host.querySelectorAll("[data-stringfret]").forEach(el=>el.onclick=()=>{
+    const i=+el.dataset.stringfret, row=+el.dataset.row;
+    ce.frets[i]=(ce.frets[i]===row) ? -1 : row;
+    renderManualFretboard();
+    updateChordEditorPreview();
+  });
+  host.querySelectorAll("[data-barrerow]").forEach(el=>el.onclick=()=>{
+    const row=+el.dataset.barrerow;
+    const idx=ce.barres.indexOf(row);
+    if(idx>=0) ce.barres.splice(idx,1); else ce.barres.push(row);
+    renderManualFretboard();
+    updateChordEditorPreview();
+  });
+}
+
+function updateChordEditorPreview(){
+  const ce=STATE.chordEditor;
+  const host=document.querySelector(".cd-editor-preview");
+  if(host) host.innerHTML=chordDiagramSVG({frets:ce.frets, baseFret:ce.baseFret, barres:ce.barres}, ce.key);
 }
 
 // =================================================================
@@ -720,6 +1181,7 @@ let STATE = {
   activeList:null,
   editing:false,
   editDraft:null,
+  chordEditor:null,       // modal de edición de UN diagrama de acorde (efímero)
   editTarget:"song",      // song | staged | new | pending
   editStagedIdx:null,
   editPendingId:null,     // uuid del pending_edit que se está aprobando
@@ -959,6 +1421,9 @@ function openSong(id){
   if(bar)bar.classList.remove("show");
   trackVisit(id);
   render();
+  loadGlobalChords().then(()=>{
+    if(STATE.view==="song" && STATE.songId===id) render();
+  });
   if(isLoggedIn() && !isAdmin()){
     Promise.all([loadPendingEdits(), loadPendingImports()]).then(()=>{
       if(STATE.view==="song" && STATE.songId===id) render();
@@ -1062,7 +1527,7 @@ function renderSong(){
   for(const sec of s.sections||[]){
     html+=`<div class="section">`;
     for(const ln of sec){
-      const chHTML = (PREFS.showChords && ln.chords) ? chordsHTML(ln.chords,shift,flat) : "";
+      const chHTML = (PREFS.showChords && ln.chords) ? chordsHTML(ln.chords,shift,flat,s) : "";
       if(mode==="side"){
         html+=`<div class="line2"><div class="lyr2${ln.lyric?"":" empty-l"}">${esc(ln.lyric)||"&nbsp;"}</div><div class="chd2">${chHTML}</div></div>`;
       } else {
@@ -1073,6 +1538,8 @@ function renderSong(){
     html+=`</div>`;
   }
   html+=`</div>`;
+
+  if(PREFS.showChords) html += chordFooterHTML(s, shift, flat);
 
   // ----- ENLACES (múltiples) -----
   const songLinks = LINKS[id]||[];
@@ -1155,6 +1622,7 @@ function renderSong(){
   });
   $main.querySelector("#addCmt").onclick=()=>openAddComment(id);
   $main.querySelector("#reportBtn").onclick=()=>reportSong(id);
+  $main.querySelectorAll(".chord-tok").forEach(el=>el.onclick=()=>openChordDiagramPopup(el.dataset.chordkey, el.dataset.chordlabel, s));
 
   setupAutoscroll();
 }
@@ -1498,7 +1966,8 @@ function startEdit(id){
   STATE.editDraft={
     title:s.title, categorias:catsOf(s), liturgica:(s.liturgica===undefined?null:s.liturgica),
     coleccion:collOf(s), credits:s.credits||"", capo:+(s.capo||0),
-    sections: JSON.parse(JSON.stringify(s.sections||[]))
+    sections: JSON.parse(JSON.stringify(s.sections||[])),
+    custom_chord_diagrams: s.custom_chord_diagrams ? JSON.parse(JSON.stringify(s.custom_chord_diagrams)) : {}
   };
   STATE.view="song";
   window.scrollTo(0,0);
@@ -1511,7 +1980,8 @@ function startEditStaged(idx){
   STATE.editDraft={
     title:s.title||"", categorias:catsOf(s), liturgica:(s.liturgica===undefined?null:s.liturgica),
     coleccion:s.coleccion||"general", credits:s.credits||"", capo:+(s.capo||0),
-    sections: JSON.parse(JSON.stringify(s.sections||[[{lyric:"",chords:""}]]))
+    sections: JSON.parse(JSON.stringify(s.sections||[[{lyric:"",chords:""}]])),
+    custom_chord_diagrams: s.custom_chord_diagrams ? JSON.parse(JSON.stringify(s.custom_chord_diagrams)) : {}
   };
   window.scrollTo(0,0);
   render();
@@ -1520,7 +1990,7 @@ function startEditStaged(idx){
 function startAddManual(){
   STATE.editing=true; STATE.editTarget="new"; STATE.view="song"; STATE.songId=null;
   STATE.editDraft={ title:"", categorias:[], liturgica:null, coleccion:"general", credits:"", capo:0,
-    sections:[[{lyric:"",chords:""}]] };
+    sections:[[{lyric:"",chords:""}]], custom_chord_diagrams:{} };
   window.scrollTo(0,0);
   render();
 }
@@ -1535,7 +2005,8 @@ function startAddVersion(baseId){
     coleccion:collOf(base), credits:base.credits||"", capo:+(base.capo||0),
     sections: JSON.parse(JSON.stringify(base.sections||[[{lyric:"",chords:""}]])),
     versionLabel:"Versión "+(siblings+2),
-    _versionParent: baseId, _versionParentTitle: base.title
+    _versionParent: baseId, _versionParentTitle: base.title,
+    custom_chord_diagrams: base.custom_chord_diagrams ? JSON.parse(JSON.stringify(base.custom_chord_diagrams)) : {}
   };
   window.scrollTo(0,0);
   render();
@@ -1612,6 +2083,13 @@ function renderEditor(){
 
   html+=`</div>
     <button class="btn" id="addSection" style="width:100%;justify-content:center;margin:4px 0 20px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Agregar estrofa</button>
+`;
+
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px">
+      <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Diagramas de acordes</label>
+      <span class="hint" style="margin:0">Se detectan solos. Click en uno para elegir otro voicing o dibujarlo a mano.</span>
+    </div>
+    <div class="cd-chip-wrap" id="edChordChips"><div class="hint" style="margin:0">Cargando librería de acordes…</div></div>
 `;
 
   if(tgt==="song" && isAdmin()){
@@ -1718,6 +2196,7 @@ function attachEditorEvents(id){
     if(d.liturgica===true||d.liturgica===false) songObj.liturgica=d.liturgica;
     if(d.capo>0) songObj.capo=d.capo; else songObj.capo=0;
     if(d.credits&&d.credits.trim()) songObj.credits=d.credits.trim(); else songObj.credits=null;
+    songObj.custom_chord_diagrams = d.custom_chord_diagrams||{};
 
     if(tgt==="new"){
       const dup=findDuplicateCandidate(songObj.title, songObj.sections);
@@ -1821,8 +2300,9 @@ function attachEditorEvents(id){
       else w.style.display="none";
     }
   }
-  document.querySelectorAll(".ci").forEach(inp=>inp.addEventListener("input",validateChords));
+  document.querySelectorAll(".ci").forEach(inp=>inp.addEventListener("input",()=>{validateChords();refreshChordChips();}));
   validateChords();
+  refreshChordChips();
 
   document.querySelectorAll("[data-addline]").forEach(b=>b.onclick=()=>{readEditorIntoDraft();STATE.editDraft.sections[+b.dataset.addline].push({lyric:"",chords:""});render()});
   document.querySelectorAll("[data-linedel]").forEach(b=>b.onclick=()=>{readEditorIntoDraft();const[si,li]=b.dataset.linedel.split("-").map(Number);STATE.editDraft.sections[si].splice(li,1);if(STATE.editDraft.sections[si].length===0)STATE.editDraft.sections.splice(si,1);render()});
@@ -2384,6 +2864,7 @@ function buildPayloadSong(s){
   obj.capo=+s.capo>0?+s.capo:0;
   if(s.credits&&s.credits.trim())obj.credits=s.credits.trim();
   if(s.parent_song_id){ obj.parent_song_id=s.parent_song_id; obj.version_label=s.version_label||""; }
+  if(s.custom_chord_diagrams && Object.keys(s.custom_chord_diagrams).length) obj.custom_chord_diagrams=s.custom_chord_diagrams;
   return obj;
 }
 
@@ -2620,6 +3101,24 @@ function openModal(html){ modal.innerHTML=html; scrim.classList.add("show"); }
 function closeModal(){ scrim.classList.remove("show"); }
 scrim.onclick=e=>{if(e.target===scrim)closeModal()};
 window.closeModal=closeModal;
+
+// ---- mensaje de bienvenida (una vez por dispositivo/navegador) ----
+const WELCOME_SEEN_KEY = "cmpaz_welcome_seen_v1";
+function showWelcomeMessage(){
+  openModal(`<div class="modal-head"><h3>¡Bienvenido/a! 👋</h3>${closeBtn()}</div>
+    <div class="modal-body">
+      <p style="margin:0 0 12px;line-height:1.5">Este cancionero está <b>en desarrollo</b>, así que si ves algún error en una canción
+      (un acorde mal, la categoría, la letra, o el diagrama de un acorde) puedes ayudarnos muchísimo corrigiéndolo tú mismo/a.</p>
+      <p style="margin:0 0 12px;line-height:1.5">Para hacerlo, entra a la canción y toca el ícono de
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      <b>editar</b>: ahí puedes corregir los acordes, la categoría, la letra y los diagramas de acordes — todo.</p>
+      <p style="margin:0;line-height:1.5">Tip: toca cualquier acorde en la letra de una canción para ver su diagrama al instante.</p>
+      <p style="margin:12px 0 0;line-height:1.5">Cualquier aporte suma. ¡Gracias por ayudar! 🙏</p>
+      <button class="btn" id="welcomeOk" style="margin-top:16px;width:100%">Entendido</button>
+    </div>`);
+  document.getElementById("welcomeOk").onclick=()=>closeModal();
+  try{ localStorage.setItem(WELCOME_SEEN_KEY,"1"); }catch(e){}
+}
 
 let toastT=null;
 function toast(msg){
@@ -3238,7 +3737,8 @@ function openPendingEditsPanel(){
       coleccion:pe.edit_data.coleccion||collOf(s),
       credits:pe.edit_data.credits||s.credits||"",
       capo:+(pe.edit_data.capo||0),
-      sections:JSON.parse(JSON.stringify(pe.edit_data.sections||s.sections||[[{lyric:"",chords:""}]]))
+      sections:JSON.parse(JSON.stringify(pe.edit_data.sections||s.sections||[[{lyric:"",chords:""}]])),
+      custom_chord_diagrams:JSON.parse(JSON.stringify(pe.edit_data.custom_chord_diagrams||s.custom_chord_diagrams||{}))
     };
     window.scrollTo(0,0);
     render();
@@ -3292,6 +3792,9 @@ async function init(){
   applyTheme();
   updateAuthBtn();
   render();
+  try{
+    if(!localStorage.getItem(WELCOME_SEEN_KEY)) showWelcomeMessage();
+  }catch(e){}
   // listen for auth changes
   db.auth.onAuthStateChange(async(_ev,session)=>{
     SESSION=session;
