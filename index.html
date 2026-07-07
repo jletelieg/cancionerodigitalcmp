@@ -33,16 +33,24 @@ html[data-theme="dark"]{
   --danger:#E07A7A;
   --shadow:0 1px 2px rgba(0,0,0,.3), 0 14px 40px -16px rgba(0,0,0,.6);
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%}
+html{-webkit-text-size-adjust:100%}
 body{
   background:var(--bg); color:var(--ink); font-family:var(--sans);
   -webkit-font-smoothing:antialiased; line-height:1.45; overflow-x:hidden;
   overscroll-behavior-y:none;
 }
-button{font-family:inherit;cursor:pointer;color:inherit}
-input,select,textarea{font-family:inherit;color:inherit}
+button{font-family:inherit;cursor:pointer;color:inherit;touch-action:manipulation}
+a{touch-action:manipulation}
+input,select,textarea{font-family:inherit;color:inherit;font-size:16px}
 ::selection{background:var(--gold-bg)}
+/* feedback táctil: como el hover no aplica bien en touch, usamos :active en los controles principales */
+.chip:active,.tab:active,.mini:active,.rib-circ:active,.rib-btn:active,.iconbtn:active,
+.song-row:active,.list-card:active,.btn:active,.link-chip:active,.lopt:active,.rep-chip:active,.tagsel:active{
+  transform:scale(.96);transition:transform .08s;
+}
+.btn:active,.iconbtn:active{transform:none;filter:brightness(.94)}
 
 /* ============ LAYOUT ============ */
 .app{display:flex;flex-direction:column;min-height:100%}
@@ -59,7 +67,7 @@ header.top{
 .brand small{display:block;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;opacity:.62;font-family:var(--sans)}
 .search-wrap{flex:1;position:relative;min-width:0}
 .search-wrap input{
-  width:100%;border:none;border-radius:999px;padding:10px 14px 10px 38px;font-size:15px;
+  width:100%;border:none;border-radius:999px;padding:10px 14px 10px 38px;font-size:16px;
   background:rgba(255,255,255,.14);color:var(--indigo-ink);outline:none;
 }
 html[data-theme="dark"] .search-wrap input{background:rgba(255,255,255,.08)}
@@ -175,7 +183,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .scrim{position:fixed;inset:0;background:rgba(20,16,6,.5);backdrop-filter:blur(3px);z-index:60;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
 .scrim.show{opacity:1;pointer-events:auto}
 @media(min-width:640px){.scrim{align-items:center}}
-.modal{background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:90vh;overflow:auto;box-shadow:var(--shadow);transform:translateY(20px);transition:transform .2s;padding:0}
+.modal{background:var(--bg);border-radius:18px 18px 0 0;width:100%;max-width:560px;max-height:90vh;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:var(--shadow);transform:translateY(20px);transition:transform .2s;padding:0}
 @media(min-width:640px){.modal{border-radius:18px;transform:scale(.97)}}
 .scrim.show .modal{transform:none}
 .modal-head{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px;z-index:2;border-bottom:1px solid var(--line)}
@@ -183,7 +191,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .modal-body{padding:16px 18px 22px}
 .field{margin-bottom:15px}
 .field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
-.field input,.field select,.field textarea{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:15px;outline:none}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:16px;outline:none}
 .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--gold)}
 .field textarea{resize:vertical;line-height:1.4}
 .hint{font-size:12px;color:var(--faint);margin-top:6px;line-height:1.4}
@@ -202,7 +210,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .ed-section-head .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--faint)}
 .ed-line{display:grid;grid-template-columns:1fr;gap:5px;margin-bottom:9px;padding-bottom:9px;border-bottom:1px dashed var(--line)}
 .ed-line:last-child{border-bottom:none;margin-bottom:4px;padding-bottom:0}
-.ed-line input{width:100%;border:1px solid var(--line-strong);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:14px}
+.ed-line input{width:100%;border:1px solid var(--line-strong);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:16px}
 .ed-line .ci{font-family:var(--mono);color:var(--gold);font-size:13px}
 .ed-line-tools{display:flex;gap:6px;align-items:center}
 .txt-mini{background:none;border:none;color:var(--faint);font-size:12px;font-weight:600;padding:4px 6px;border-radius:6px}
@@ -221,6 +229,11 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
   .brand small{display:none}
   .sv-title{font-size:23px}
   .rib-key{min-width:40px}
+  .rib-circ{width:36px;height:36px}
+  .rib-btn{min-height:38px;padding:7px 11px}
+  .mini{width:38px;height:38px}
+  .song-row{padding:14px 10px}
+  .ribbon{padding:8px;gap:8px}
 }
 /* En móvil muy estrecho, ocultar el texto "Cancionero" para que la barra de búsqueda tenga espacio */
 @media(max-width:480px){
@@ -281,6 +294,8 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .tagsel.on .dot{outline:1px solid rgba(255,255,255,.5)}
 
 /* acordes no reconocidos (rojo) */
+.chord-tok{cursor:pointer;border-radius:4px;transition:background .12s,color .12s}
+.chord-tok:hover{background:var(--gold-bg);color:var(--gold)}
 .chord-bad{color:var(--danger);text-decoration:underline wavy var(--danger);text-underline-offset:2px}
 .ci-bad{border-color:var(--danger)!important;background:var(--gold-bg)!important}
 .chord-warn{background:var(--gold-bg);color:var(--danger);border:1px solid var(--danger);border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.4;margin:4px 0 8px}
@@ -369,7 +384,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .notif-date{font-size:11px;color:var(--faint);margin-top:3px}
 /* Filas de admin colecciones */
 .coll-admin-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.coll-admin-row input{flex:1;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--ink);outline:none}
+.coll-admin-row input{flex:1;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:16px;color:var(--ink);outline:none}
 .coll-admin-row input:focus{border-color:var(--gold)}
 .coll-order-btns{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
 /* Tarjetas de revisión de pendientes */
@@ -684,8 +699,9 @@ function songHasBadChord(s){
   for(const sec of s.sections||[]) for(const ln of sec) if(lineHasBadChord(ln.chords)) return true;
   return false;
 }
-// HTML de una línea de acordes: transpone los reconocidos, marca en rojo los no reconocidos
-function chordsHTML(chords,shift,flat){
+// HTML de una línea de acordes: transpone los reconocidos, marca en rojo los no reconocidos.
+// Los acordes reconocidos ('ok') se envuelven en un <span> clickeable que muestra su diagrama.
+function chordsHTML(chords,shift,flat,song){
   if(!chords) return "";
   return chords.split(/(\s+)/).map(t=>{
     // runs de espacios: se conserva UN espacio normal (punto de quiebre para que la línea
@@ -694,7 +710,10 @@ function chordsHTML(chords,shift,flat){
     const st=chordTokenStatus(t);
     if(st==="bad") return `<span class="chord-bad" title="No se reconoce como acorde: no cambia de tono. Repórtalo o corrígelo.">${esc(t)}</span>`;
     if(st==="neutral") return esc(t);
-    return esc(transChord(t,shift,flat));
+    const transposed=transChord(t,shift,flat);
+    const key=canonicalChordKey(transposed);
+    if(!key) return esc(transposed);
+    return `<span class="chord-tok" data-chordkey="${esc(key)}" data-chordlabel="${esc(transposed)}" title="Ver diagrama de ${esc(transposed)}">${esc(transposed)}</span>`;
   }).join("");
 }
 
@@ -761,11 +780,22 @@ function extractSongChordKeys(song, shift, flat){
 
 // ---- resolución de diagrama: override de la canción > librería global ----
 function getChordDiagram(key, song){
-  const custom = song.custom_chord_diagrams && song.custom_chord_diagrams[key];
+  const custom = song && song.custom_chord_diagrams && song.custom_chord_diagrams[key];
   if(custom) return custom;
   const lib = GLOBAL_CHORDS && GLOBAL_CHORDS[key];
   if(lib && lib.length) return lib[0]; // primer voicing = default de la librería
   return null;
+}
+
+// ---- popover con el diagrama de UN acorde, al hacer click sobre él en la letra ----
+function openChordDiagramPopup(key,label,song){
+  if(!key) return;
+  const voicing = getChordDiagram(key, song);
+  const svg = chordDiagramSVG(voicing, label||key);
+  openModal(`<div class="modal-head"><h3>Acorde: ${esc(label||key)}</h3>${closeBtn()}</div>
+    <div class="modal-body" style="display:flex;justify-content:center;padding:22px 18px 34px">
+      <div style="transform:scale(2.1);transform-origin:center">${svg}</div>
+    </div>`);
 }
 
 // ---- SVG de un diagrama individual ----
@@ -1095,8 +1125,28 @@ function songSearchText(id){
 // ---- Versiones de canciones ----
 // Una canción "versión" tiene parent_song_id apuntando a la original.
 // La original (o cualquier canción sin versiones) tiene parent_song_id=null.
+// Índice parent->[hijos] cacheado (evita recorrer TODAS las canciones por cada
+// canción al filtrar/ordenar la biblioteca, que era O(n²) en cada tecla escrita).
+// _SONGS_REV se incrementa cada vez que SONGS cambia (ver bumpSongsRev()).
+let _SONGS_REV=0;
+function bumpSongsRev(){ _SONGS_REV++; }
+let _verIdxCache=null, _verIdxRev=-1;
+function versionIndex(){
+  if(_verIdxCache && _verIdxRev===_SONGS_REV) return _verIdxCache;
+  const map=new Map();
+  for(const id of allIds()){
+    const s=SONGS[id];
+    if(s && s.parent_song_id){
+      let arr=map.get(s.parent_song_id);
+      if(!arr){ arr=[]; map.set(s.parent_song_id,arr); }
+      arr.push(id);
+    }
+  }
+  _verIdxCache=map; _verIdxRev=_SONGS_REV;
+  return map;
+}
 function songVersions(baseId){
-  return allIds().filter(id=>{ const s=SONGS[id]; return s && s.parent_song_id===baseId; });
+  return versionIndex().get(baseId)||[];
 }
 function baseSongId(id){ const s=SONGS[id]; return (s&&s.parent_song_id)?s.parent_song_id:id; }
 function isVersion(id){ const s=SONGS[id]; return !!(s&&s.parent_song_id); }
@@ -1355,6 +1405,7 @@ function renderLibrary(){
   renderAlphaBar(ids);
 }
 
+let _collPanelDocHandler=null;
 function attachLibraryEvents(){
   $main.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{
     const c=b.dataset.cat;
@@ -1377,7 +1428,9 @@ function attachLibraryEvents(){
       STATE.topVisited=false;
       render();
     });
-    document.addEventListener("click",(e)=>{if(!cfPanel.contains(e.target)&&e.target!==cfBtn)cfPanel.classList.remove("show");},{once:true});
+    if(_collPanelDocHandler) document.removeEventListener("click",_collPanelDocHandler);
+    _collPanelDocHandler=(e)=>{if(!cfPanel.contains(e.target)&&e.target!==cfBtn)cfPanel.classList.remove("show");};
+    document.addEventListener("click",_collPanelDocHandler);
   }
   $main.querySelectorAll("[data-open]").forEach(r=>r.onclick=(e)=>{
     if(e.target.closest("[data-fav],[data-addlist],[data-rmlist]"))return;
@@ -1510,7 +1563,7 @@ function renderSong(){
   for(const sec of s.sections||[]){
     html+=`<div class="section">`;
     for(const ln of sec){
-      const chHTML = (PREFS.showChords && ln.chords) ? chordsHTML(ln.chords,shift,flat) : "";
+      const chHTML = (PREFS.showChords && ln.chords) ? chordsHTML(ln.chords,shift,flat,s) : "";
       if(mode==="side"){
         html+=`<div class="line2"><div class="lyr2${ln.lyric?"":" empty-l"}">${esc(ln.lyric)||"&nbsp;"}</div><div class="chd2">${chHTML}</div></div>`;
       } else {
@@ -1605,6 +1658,7 @@ function renderSong(){
   });
   $main.querySelector("#addCmt").onclick=()=>openAddComment(id);
   $main.querySelector("#reportBtn").onclick=()=>reportSong(id);
+  $main.querySelectorAll(".chord-tok").forEach(el=>el.onclick=()=>openChordDiagramPopup(el.dataset.chordkey, el.dataset.chordlabel, s));
 
   setupAutoscroll();
 }
@@ -2212,7 +2266,7 @@ function attachEditorEvents(id){
       // Admin edita directamente (o aprueba un pending)
       const {error}=await db.from("songs").update({...songObj,updated_at:new Date().toISOString()}).eq("id",id);
       if(error){toast("Error al guardar: "+error.message);unlockSaveBtn();return;}
-      SONGS[id]=Object.assign({},SONGS[id],songObj);
+      SONGS[id]=Object.assign({},SONGS[id],songObj); bumpSongsRev();
       if(STATE.editTarget==="pending_approve"&&STATE.editPendingId){
         const pe=PENDING_EDITS.find(p=>String(p.id)===String(STATE.editPendingId));
         await db.from("pending_edits").update({status:"approved",reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",STATE.editPendingId);
@@ -2352,7 +2406,7 @@ async function deleteSong(id){
   } else {
     await db.from("songs").delete().eq("id",id);
   }
-  delete SONGS[id];
+  delete SONGS[id]; bumpSongsRev();
   FAVS=FAVS.filter(x=>x!==id); LISTS.forEach(L=>L.songIds=L.songIds.filter(x=>x!==id));
   savePersonalState();
   STATE.editing=false; closeSong(); toast("Canción eliminada");
@@ -2572,7 +2626,7 @@ function openAssignSongsModal(collKey, collName){
   const html=`<div class="modal-head"><h3>Añadir canciones a "${esc(collName)}"</h3>${closeBtn()}</div>
   <div class="modal-body" style="padding-bottom:16px">
     <div class="hint" style="margin-bottom:12px">Selecciona canciones para asignar a esta colección. Puedes omitir esto ahora.</div>
-    <input id="assignSearch" placeholder="Buscar canción…" style="width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 12px;font-size:14px;margin-bottom:8px;outline:none">
+    <input id="assignSearch" placeholder="Buscar canción…" style="width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:8px;padding:8px 12px;font-size:16px;margin-bottom:8px;outline:none">
     <div class="song-check-list" id="assignList">${buildRows()}</div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn" id="assignSkip" style="flex:1;justify-content:center">Omitir</button>
@@ -2993,7 +3047,7 @@ async function adminApproveImport(){
     });
     const {data,error}=await db.from("songs").insert(rows).select();
     if(error){toast("Error al aprobar: "+error.message);return;}
-    (data||[]).forEach(s=>{ SONGS[s.id]=s; });
+    (data||[]).forEach(s=>{ SONGS[s.id]=s; }); bumpSongsRev();
     (data||[]).forEach(s=>logSongHistory(s.id, s.parent_song_id?'version_added':'import_approved', {title:s.title, from_import:STATE.reviewPendingId}));
     const newStatus=STATE.reviewEdited?"approved_with_changes":"approved";
     await db.from("pending_imports").update({status:newStatus,reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",STATE.reviewPendingId);
@@ -3083,6 +3137,22 @@ function openModal(html){ modal.innerHTML=html; scrim.classList.add("show"); }
 function closeModal(){ scrim.classList.remove("show"); }
 scrim.onclick=e=>{if(e.target===scrim)closeModal()};
 window.closeModal=closeModal;
+
+// ---- mensaje de bienvenida (se muestra siempre al entrar) ----
+function showWelcomeMessage(){
+  openModal(`<div class="modal-head"><h3>¡Bienvenido/a! 👋</h3>${closeBtn()}</div>
+    <div class="modal-body">
+      <p style="margin:0 0 12px;line-height:1.5">Este cancionero está <b>en desarrollo</b>, así que si ves algún error en una canción
+      (un acorde mal, la categoría, la letra, o el diagrama de un acorde) puedes ayudarnos muchísimo corrigiéndolo tú mismo/a.</p>
+      <p style="margin:0 0 12px;line-height:1.5">Para hacerlo, entra a la canción y toca el ícono de
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      <b>editar</b>: ahí puedes corregir los acordes, la categoría, la letra y los diagramas de acordes — todo.</p>
+      <p style="margin:0;line-height:1.5">Tip: toca cualquier acorde en la letra de una canción para ver su diagrama al instante.</p>
+      <p style="margin:12px 0 0;line-height:1.5">Cualquier aporte suma. ¡Gracias por ayudar! 🙏</p>
+      <button class="btn" id="welcomeOk" style="margin-top:16px;width:100%">Entendido</button>
+    </div>`);
+  document.getElementById("welcomeOk").onclick=()=>closeModal();
+}
 
 let toastT=null;
 function toast(msg){
@@ -3241,6 +3311,7 @@ async function loadSharedData(){
   ]);
   SONGS={};
   for(const s of songsRes.data||[]) SONGS[s.id]=s;
+  bumpSongsRev();
   // Sort collections by sort_order if available (column may not exist in older DBs)
   const rawColls = (collsRes.data||[]);
   const hasSortOrder = rawColls.length>0 && rawColls[0].sort_order!=null;
@@ -3285,11 +3356,15 @@ async function loadProfile(){
 // =================================================================
 //  EVENTOS GLOBALES
 // =================================================================
+let _searchDebounceT=null;
 document.getElementById("search").addEventListener("input",e=>{
   STATE.query=e.target.value;
   document.getElementById("searchClear").classList.toggle("show",!!e.target.value);
   if(STATE.view==="song"){STATE.view="list"}
-  render();
+  // Debounce: evita reconstruir toda la lista (matchingIds + innerHTML completo)
+  // en cada tecla, que era el mayor costo de rendimiento al escribir rápido.
+  clearTimeout(_searchDebounceT);
+  _searchDebounceT=setTimeout(render,120);
 });
 document.getElementById("searchClear").onclick=()=>{
   STATE.query="";document.getElementById("search").value="";
@@ -3362,6 +3437,7 @@ function renderAlphaBar(ids){
   const allLetters="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   bar.innerHTML=allLetters.map(l=>`<span class="alpha-letter${present.has(l)?"":" dim"}" ${present.has(l)?`onclick="jumpToAlphaLetter('${l}')"`:""}>${l}</span>`).join("");
   bar.classList.add("show");
+  if(bar._invalidateLetterRects) bar._invalidateLetterRects();
   setupAlphaBarHover();
 }
 
@@ -3380,10 +3456,21 @@ function setupAlphaBarHover(){
   if(!bar||bar._hoverSet)return;
   bar._hoverSet=true;
 
+  // Cachea los centros verticales de cada letra una sola vez al entrar con el
+  // mouse/touch, en vez de leer getBoundingClientRect() (forza layout) por
+  // cada letra en CADA evento mousemove.
+  let _letterRects=null;
+  function computeLetterRects(){
+    _letterRects=[...bar.querySelectorAll(".alpha-letter:not(.dim)")].map(l=>{
+      const r=l.getBoundingClientRect();
+      return {el:l, center:r.top+r.height/2};
+    });
+  }
+  bar.addEventListener("mouseenter",computeLetterRects);
+  bar._invalidateLetterRects=()=>{ _letterRects=null; };
   bar.addEventListener("mousemove",(e)=>{
-    const letters=[...bar.querySelectorAll(".alpha-letter:not(.dim)")];
-    letters.forEach(l=>{
-      const lCenter=l.getBoundingClientRect().top+l.getBoundingClientRect().height/2;
+    if(!_letterRects) computeLetterRects();
+    _letterRects.forEach(({el:l,center:lCenter})=>{
       const dist=Math.abs(e.clientY-lCenter);
       const maxDist=55;
       if(dist<maxDist){
@@ -3601,7 +3688,7 @@ async function finalizeNewSong(songObj, parentId, versionLabel){
     const row=Object.assign({},obj,{is_base:false,hidden:false,created_by:SESSION?.user.id||null});
     const {data,error}=await db.from("songs").insert(row).select().single();
     if(error){toast("Error al guardar: "+error.message);unlockSaveBtn();return;}
-    SONGS[data.id]=data;
+    SONGS[data.id]=data; bumpSongsRev();
     logSongHistory(data.id, parentId?'version_added':'created', {title:data.title});
     STATE.editing=false; STATE.editTarget="song"; STATE.view="song"; STATE.songId=data.id; STATE.noCapo=false;
     toast(parentId?`Versión agregada: "${obj.version_label}"`:"Canción agregada"); render();
@@ -3670,7 +3757,7 @@ function openPendingEditsPanel(){
     const songObj=pe.edit_data;
     const {error}=await db.from("songs").update({...songObj,updated_at:new Date().toISOString()}).eq("id",sid);
     if(error){toast("Error: "+error.message);b.disabled=false;return;}
-    SONGS[sid]=Object.assign({},SONGS[sid],songObj);
+    SONGS[sid]=Object.assign({},SONGS[sid],songObj); bumpSongsRev();
     const {error:e2}=await db.from("pending_edits").update({status:"approved",reviewed_at:new Date().toISOString(),reviewed_by:SESSION.user.id}).eq("id",pid);
     if(e2){toast("Aprobado, pero no se pudo marcar como revisado: "+e2.message);}
     logSongHistory(sid,'edited',{title:songObj.title});
@@ -3756,6 +3843,7 @@ async function init(){
   applyTheme();
   updateAuthBtn();
   render();
+  showWelcomeMessage();
   // listen for auth changes
   db.auth.onAuthStateChange(async(_ev,session)=>{
     SESSION=session;
