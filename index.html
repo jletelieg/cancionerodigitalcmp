@@ -353,7 +353,7 @@ html[data-theme="dark"] .rib-circ{color:var(--indigo)}
 .alpha-letter.dim{opacity:.25;pointer-events:none;cursor:default}
 @media(max-width:480px){.alpha-letter{font-size:8px;padding:1.5px 3px}}
 /* Botón volver al inicio */
-.back-to-top{position:fixed;right:18px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:36;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line-strong);color:var(--muted);display:none;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .15s;cursor:pointer}
+.back-to-top{position:fixed;right:18px;bottom:calc(140px + env(safe-area-inset-bottom));z-index:36;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line-strong);color:var(--muted);display:none;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .15s;cursor:pointer}
 .back-to-top.show{display:flex}
 .back-to-top:hover{border-color:var(--gold);color:var(--ink)}
 /* Filtro de colecciones (checklist) */
@@ -820,7 +820,17 @@ function openChordDiagramPopup(key,label,song){
       ${songId!=null ? `<button type="button" class="btn sm" id="chordPopupEditBtn">⚠ ¿Ves un error? Editar</button>` : ""}
     </div>`);
   const eb=document.getElementById("chordPopupEditBtn");
-  if(eb) eb.onclick=()=>{ closeModal(); requestEdit(songId); };
+  if(eb) eb.onclick=()=>{
+    closeModal();
+    if(!isLoggedIn()){ openAuthModal(); return; }
+    startEdit(songId);
+    loadGlobalChords().then(()=>{
+      if(STATE.editing && STATE.editTarget==="song" && STATE.songId===songId){
+        refreshChordChips();
+        openChordEditor(key);
+      }
+    });
+  };
 }
 
 // ---- SVG de un diagrama individual ----
@@ -1677,7 +1687,7 @@ function renderSong(){
   $main.querySelector("#fUp").onclick=()=>{PREFS.lyricSize=Math.min(30,PREFS.lyricSize+1);savePersonalState();render()};
   $main.querySelector("#favBtn").onclick=()=>{toggleFav(id);render()};
   $main.querySelector("#addBtn").onclick=()=>openAddToList(id);
-  $main.querySelector("#editBtn").onclick=()=>requestEdit(id);
+  const ebtn=$main.querySelector("#editBtn"); if(ebtn)ebtn.onclick=()=>requestEdit(id);
   const al=$main.querySelector("#addLink"); if(al)al.onclick=()=>openAddLink(id);
   $main.querySelectorAll("[data-dellnk]").forEach(b=>b.onclick=async()=>{
     if(!confirm('¿Quitar este enlace?'))return;
@@ -1686,7 +1696,7 @@ function renderSong(){
     LINKS[id]=(LINKS[id]||[]).filter(l=>l.id!==lid);
     toast('Enlace quitado'); render();
   });
-  $main.querySelector("#addCmt").onclick=()=>openAddComment(id);
+  const acmt=$main.querySelector("#addCmt"); if(acmt)acmt.onclick=()=>openAddComment(id);
   $main.querySelector("#reportBtn").onclick=()=>reportSong(id);
   $main.querySelectorAll(".chord-tok").forEach(el=>el.onclick=()=>openChordDiagramPopup(el.dataset.chordkey, el.dataset.chordlabel, s));
 
@@ -1754,7 +1764,10 @@ function reportSong(id){
 // el botón flotante varias veces (cada toque sube un nivel; al pasar de 10
 // vuelve a 0 y se detiene), o desde el slider de ajustes.
 let scrollTimer=null;
-const SCROLL_LEVEL_PX=[0,0.28,0.42,0.58,0.75,0.95,1.2,1.5,1.9,2.4,3.0];
+let scrollAccum=0;
+// Curva exponencial: nivel 1 muy muy lento, nivel 5 medio, nivel 10 rápido (igual que antes).
+// Valores en px por tick de 30ms.
+const SCROLL_LEVEL_PX=[0,0.0095,0.0537,0.1479,0.3036,0.5303,0.8367,1.2297,1.7173,2.3052,3.0];
 function scrollLevelPx(level){ return SCROLL_LEVEL_PX[Math.max(0,Math.min(10,level|0))]; }
 function setupAutoscroll(){
   const fab=document.getElementById("scrollFab");
@@ -1787,8 +1800,15 @@ function startAutoscroll(){
   if(scrollTimer) clearInterval(scrollTimer);
   const pxPerTick = scrollLevelPx(PREFS.scrollLevel||0);
   if(pxPerTick<=0){ scrollTimer=null; refreshFab(); return; }
+  scrollAccum=0; // acumulador de subpíxeles: en niveles bajos pxPerTick<1 y algunos
+                 // navegadores redondean scrollBy a 0, dejando el scroll congelado.
   scrollTimer=setInterval(()=>{
-    window.scrollBy(0,pxPerTick);
+    scrollAccum+=pxPerTick;
+    const whole=Math.floor(scrollAccum);
+    if(whole>=1){
+      window.scrollBy(0,whole);
+      scrollAccum-=whole;
+    }
     if(window.innerHeight+window.scrollY>=document.body.scrollHeight-2) stopAutoscroll();
   },30);
   refreshFab();
